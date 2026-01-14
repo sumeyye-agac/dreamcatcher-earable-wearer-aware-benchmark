@@ -26,3 +26,4 @@ Thumbs.db
 *.pt
 checkpoints/
 wandb/
+results/run_steps.csv

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -12,6 +13,7 @@ from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
 from src.utils.reproducibility import set_seed
 from src.utils.benchmarking import count_params, measure_cpu_latency, append_to_leaderboard
+from src.utils.runlog import StepLogger
 
 
 def collate_fn(batch):
@@ -124,29 +126,58 @@ def main():
     parser.add_argument("--run_name", type=str, default="")
     parser.add_argument("--out_csv", type=str, default="results/leaderboard.csv")
     parser.add_argument("--latency_T", type=int, default=400)
+    parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
+    parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
 
     args = parser.parse_args()
 
-    # Print training configuration
+    run_name = args.run_name if args.run_name else f"{args.model}_seed{args.seed}"
+    slog = StepLogger(run_name=run_name, csv_path=args.steps_csv)
+
     print(f"\n{'='*60}")
     print(f"Starting Training")
     print(f"  Model: {args.model}")
-    print(f"  Run Name: {args.run_name if args.run_name else 'default'}")
+    print(f"  Run Name: {run_name}")
     print(f"  Epochs: {args.epochs}")
     print(f"  Batch Size: {args.batch_size}")
     print(f"  Learning Rate: {args.lr}")
     print(f"  Seed: {args.seed}")
+    print(f"  Dataset Mode: {args.dataset_mode}")
+    print(f"  Steps CSV: {args.steps_csv}")
     print(f"{'='*60}\n")
+
+    slog.log("run_start", detail=f"model={args.model} epochs={args.epochs} bs={args.batch_size} lr={args.lr} seed={args.seed}")
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
 
     print("Loading datasets...")
+    t_ds = time.time()
+    slog.log("load_datasets_start", detail=f"mode={args.dataset_mode}")
     cfg = DreamCatcherHFAudioConfig(sample_rate=args.sr, n_mels=args.n_mels)
-    train_ds = DreamCatcherHFAudioDataset(split="train", cfg=cfg)
-    val_ds = DreamCatcherHFAudioDataset(split="validation", cfg=cfg)
-    test_ds = DreamCatcherHFAudioDataset(split="test", cfg=cfg)
+    train_ds = DreamCatcherHFAudioDataset(
+        split="train",
+        cfg=cfg,
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+    )
+    val_ds = DreamCatcherHFAudioDataset(
+        split="validation",
+        cfg=cfg,
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+    )
+    test_ds = DreamCatcherHFAudioDataset(
+        split="test",
+        cfg=cfg,
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+    )
     print(f"All datasets loaded: train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}\n")
+    slog.log("load_datasets_done", t0=t_ds, detail=f"train={len(train_ds)} val={len(val_ds)} test={len(test_ds)}")
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     val_dl = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
@@ -162,6 +193,7 @@ def main():
     best_state = None
 
     for epoch in range(1, args.epochs + 1):
+        t_ep = time.time()
         tr_loss, tr_acc, tr_f1 = run_one_epoch(model, train_dl, opt, loss_fn, device)
         va_loss, va_acc, va_f1 = evaluate(model, val_dl, loss_fn, device)
 
@@ -174,18 +206,23 @@ def main():
             f"train_loss={tr_loss:.4f} train_acc={tr_acc:.4f} train_f1={tr_f1:.4f} | "
             f"val_loss={va_loss:.4f} val_acc={va_acc:.4f} val_f1={va_f1:.4f}"
         )
+        slog.log(
+            "epoch_done",
+            t0=t_ep,
+            detail=f"epoch={epoch} train_loss={tr_loss:.4f} train_acc={tr_acc:.4f} train_f1={tr_f1:.4f} val_loss={va_loss:.4f} val_acc={va_acc:.4f} val_f1={va_f1:.4f}",
+        )
 
     if best_state is not None:
         model.load_state_dict(best_state)
 
+    t_test = time.time()
+    slog.log("test_eval_start")
     te_loss, te_acc, te_f1 = evaluate(model, test_dl, loss_fn, device)
     print(f"test_loss={te_loss:.4f} test_acc={te_acc:.4f} test_f1={te_f1:.4f}")
+    slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_acc:.4f} test_f1={te_f1:.4f}")
 
-    # Benchmark logging
     param_count = count_params(model)
     lat_ms = measure_cpu_latency(model, input_shape=(1, 1, args.n_mels, args.latency_T))
-
-    run_name = args.run_name if args.run_name else f"{args.model}_seed{args.seed}"
 
     row = {
         "run_name": run_name,
@@ -213,7 +250,9 @@ def main():
 
     append_to_leaderboard(args.out_csv, row)
     print(f"Logged to {args.out_csv}")
+    slog.log("leaderboard_written", detail=f"path={args.out_csv}")
     print("Done.")
+    slog.log("run_done")
 
 
 if __name__ == "__main__":
