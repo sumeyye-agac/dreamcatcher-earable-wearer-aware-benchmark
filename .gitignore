@@ -1,0 +1,28 @@
+# Virtual environment
+dreamcatcher-env/
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results and cache
+*.pth
+*.pt
+checkpoints/
+wandb/

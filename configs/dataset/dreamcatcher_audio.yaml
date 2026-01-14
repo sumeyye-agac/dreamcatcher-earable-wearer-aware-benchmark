@@ -1,0 +1,14 @@
+dataset:
+  name: dreamcatcher
+  modality: audio
+  sample_rate: 16000
+  representation: log_mel
+
+paths:
+  data_root: data/audio
+  label_root: data/labels
+
+preprocessing:
+  window_sec: 2.0
+  hop_sec: 1.0
+  n_mels: 64
