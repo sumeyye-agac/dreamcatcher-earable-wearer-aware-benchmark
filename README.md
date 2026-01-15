@@ -183,6 +183,20 @@ bash experiments/run_kd.sh
 ```bash
 bash experiments/run_kd_smoke.sh
 ```
+
+### Hyperparameters (KD / tuning)
+
+At the moment, this repository does **not** include an automated sweep/grid-search runner.
+KD hyperparameters (e.g., `alpha`, `tau`, `lr`, `batch_size`) are set **explicitly** in the experiment scripts
+(`experiments/run_kd*.sh`) and passed through to the training entrypoint (`src/training/train_kd.py`).
+
+**Recommended workflow today (manual sweep):**
+- Duplicate/loop over settings in a bash script (e.g., nested loops over `alpha` and `tau`)
+- Give each run a unique `--run_name`
+- Compare runs via `results/leaderboard.csv` (and per-run `results/runs/<run_name>/metrics.json`)
+
+**TODO (planned):** add a first-class sweep command, e.g. `earable sweep kd --alpha 0.3,0.5,0.7 --tau 2,5,10 ...`,
+to run combinations and log them consistently.
 ---
 
 ## Key Takeaways
