@@ -35,3 +35,6 @@ wandb/
 results/run_steps.csv
 results/run_steps_*.csv
 results/runs/
+# Leaderboard outputs (generated)
+results/leaderboard.csv
+results/leaderboard.csv.lock
