@@ -1,5 +1,9 @@
 # DreamCatcher Earable Wearer-Aware Benchmark
 
+[![Status](https://img.shields.io/badge/status-work%20in%20progress-yellow.svg)](#)
+
+**Note:** This repository is actively under development. Expect breaking changes while we iterate.
+
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/)
 [![Wav2Vec2](https://img.shields.io/badge/Wav2Vec2-Facebook-blue.svg)](https://huggingface.co/facebook/wav2vec2-base)
