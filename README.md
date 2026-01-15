@@ -51,13 +51,13 @@ learning perspective.
 
 2. **Create a virtual environment:**
    ```bash
-   python -m venv .venv-earable
+   python3 -m venv .venv-earable
    source .venv-earable/bin/activate  # On Windows: .venv-earable\Scripts\activate
    ```
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   python3 -m pip install -r requirements.txt
    ```
 
 4. **Authenticate with HuggingFace:**
@@ -69,6 +69,16 @@ learning perspective.
      hf auth login
      ```
    - Enter your HuggingFace token when prompted
+
+   **Non-interactive / CI login (env var):** If `hf auth login` is not convenient (e.g., CI or terminals that can’t prompt),
+   you can provide your token via environment variables:
+   ```bash
+   export HF_TOKEN="hf_..."
+   export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
+   ```
+
+   **Rare invalid audio buffers:** Some samples may contain empty/invalid audio (NaN/inf). The loader can skip/resample
+   these cases via `--invalid_audio_policy {skip,resample,zero}` (recommended: `skip`).
 
 ### Troubleshooting
 

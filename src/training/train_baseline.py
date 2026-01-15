@@ -113,6 +113,13 @@ def main():
     # audio
     parser.add_argument("--sr", type=int, default=16000)
     parser.add_argument("--n_mels", type=int, default=64)
+    parser.add_argument(
+        "--invalid_audio_policy",
+        type=str,
+        default="skip",
+        choices=["skip", "resample", "zero"],
+        help="How to handle rare invalid/empty audio buffers in the dataset.",
+    )
 
     # CRNN
     parser.add_argument("--rnn_hidden", type=int, default=64)
@@ -154,7 +161,11 @@ def main():
     print("Loading datasets...")
     t_ds = time.time()
     slog.log("load_datasets_start", detail=f"mode={args.dataset_mode}")
-    cfg = DreamCatcherHFAudioConfig(sample_rate=args.sr, n_mels=args.n_mels)
+    cfg = DreamCatcherHFAudioConfig(
+        sample_rate=args.sr,
+        n_mels=args.n_mels,
+        invalid_audio_policy=args.invalid_audio_policy,
+    )
     train_ds = DreamCatcherHFAudioDataset(
         split="train",
         cfg=cfg,

@@ -5,6 +5,45 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+LEADERBOARD_COLUMNS = [
+    "run_name",
+    "task",
+    "model",
+    "teacher",
+    "seed",
+    "epochs",
+    "batch_size",
+    "lr",
+    "sr",
+    "n_mels",
+    "rnn_hidden",
+    "rnn_layers",
+    "cbam_reduction",
+    "cbam_sa_kernel",
+    "alpha",
+    "tau",
+    "best_val_f1",
+    "test_acc",
+    "test_f1",
+    "params",
+    "cpu_latency_ms",
+]
+
+
+def read_leaderboard_csv(path: str) -> pd.DataFrame:
+    """
+    Read `results/leaderboard.csv`.
+
+    Supports both:
+    - headered CSVs (recommended)
+    - legacy/headerless CSVs with the exact schema written by `append_to_leaderboard`
+    """
+    df = pd.read_csv(path)
+    if "run_name" not in df.columns and df.shape[1] == len(LEADERBOARD_COLUMNS):
+        df.columns = LEADERBOARD_COLUMNS
+    return df
+
+
 def pareto_front(df, x_col: str, y_col: str, maximize_y: bool = True):
     """
     Computes Pareto front for (x=cost, y=score).
@@ -46,7 +85,7 @@ def main():
     parser.add_argument("--title", type=str, default="Pareto Frontier: F1 vs Latency")
     args = parser.parse_args()
 
-    df = pd.read_csv(args.csv)
+    df = read_leaderboard_csv(args.csv)
 
     # Ensure numeric
     df[args.x] = pd.to_numeric(df[args.x], errors="coerce")

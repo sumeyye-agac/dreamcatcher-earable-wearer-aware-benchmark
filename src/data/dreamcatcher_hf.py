@@ -164,6 +164,11 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
 class DreamCatcherHFAudioConfig:
     sample_rate: int = 16000
     n_mels: int = 64
+    # How to handle rare malformed audio buffers:
+    # - "skip": never use invalid audio; search nearby indices; error if none found
+    # - "resample": like skip, but fall back to silence if still invalid (not recommended for benchmarks)
+    # - "zero": always replace invalid audio with silence (fast, but can bias results)
+    invalid_audio_policy: str = "skip"
 
 
 class DreamCatcherHFAudioDataset:
@@ -217,19 +222,71 @@ class DreamCatcherHFAudioDataset:
         return len(self.ds)
 
     def __getitem__(self, idx: int) -> Tuple[np.ndarray, int]:
-        row = self.ds[idx]
+        def _load_row_audio(i: int):
+            row0 = self.ds[i]
+            if "audio" in row0:
+                audio0 = row0["audio"]
+            elif "audio_data" in row0:
+                audio0 = row0["audio_data"]
+            else:
+                raise KeyError("Expected 'audio' (or legacy 'audio_data') in dataset row.")
+            y0 = np.asarray(audio0["array"], dtype=np.float32)
+            sr0 = int(audio0["sampling_rate"])
+            return y0, sr0, row0
 
-        if "audio" in row:
-            audio = row["audio"]
-        elif "audio_data" in row:
-            audio = row["audio_data"]
-        else:
-            raise KeyError("Expected 'audio' (or legacy 'audio_data') in dataset row.")
-        y = np.asarray(audio["array"], dtype=np.float32)
-        sr = int(audio["sampling_rate"])
+        y, sr, row = _load_row_audio(idx)
 
+        # Robustify against rare malformed / empty audio buffers
         if y.ndim == 2:
-            y = y.mean(axis=1)
+            # Common cases:
+            # - (T, C): valid, average channels
+            # - (T, 0) or (0, C): invalid/empty -> treat as empty mono
+            if y.shape[0] == 0 or y.shape[1] == 0:
+                y = np.zeros((0,), dtype=np.float32)
+            else:
+                y = y.mean(axis=1)
+
+        def _is_invalid_audio(y1: np.ndarray) -> bool:
+            return (y1.size == 0) or (not np.isfinite(y1).all())
+
+        if _is_invalid_audio(y):
+            policy = str(getattr(self.cfg, "invalid_audio_policy", "resample")).lower().strip()
+            if policy not in {"skip", "resample", "zero"}:
+                policy = "skip"
+
+            if policy in {"skip", "resample"}:
+                max_tries = min(1024, max(1, len(self.ds) - 1))
+                for k in range(1, max_tries + 1):
+                    j = (idx + k) % len(self.ds)
+                    y2, sr2, row2 = _load_row_audio(j)
+                    if y2.ndim == 2:
+                        if y2.shape[0] == 0 or y2.shape[1] == 0:
+                            y2 = np.zeros((0,), dtype=np.float32)
+                        else:
+                            y2 = y2.mean(axis=1)
+                    if not _is_invalid_audio(y2):
+                        self._logger.log("invalid_audio_resampled", detail=f"idx={idx} -> {j}")
+                        y, sr, row = y2, sr2, row2
+                        break
+
+            if _is_invalid_audio(y):
+                if policy == "zero":
+                    self._logger.log("invalid_audio_zero_fallback", detail=f"idx={idx}")
+                    y = np.zeros((0,), dtype=np.float32)
+                elif policy == "resample":
+                    # Last resort: keep training running, but avoid crashes.
+                    self._logger.log("invalid_audio_zero_fallback", detail=f"idx={idx}")
+                    y = np.zeros((0,), dtype=np.float32)
+                else:
+                    # "skip" policy: do not silently fabricate an example.
+                    raise RuntimeError(
+                        f"Invalid audio encountered at idx={idx} and could not find a valid replacement "
+                        f"within {max_tries} tries. Consider policy='resample' or 'zero' if you just want to run."
+                    )
+
+        # Replace NaN/inf with zeros so librosa doesn't hard-error
+        if y.size > 0:
+            y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
 
         if sr != self.cfg.sample_rate:
             import librosa
