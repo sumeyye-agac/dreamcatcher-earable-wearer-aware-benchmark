@@ -194,6 +194,12 @@ def main():
     parser.add_argument("--teacher_name", type=str, default="facebook/wav2vec2-base")
     parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
     parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
+    parser.add_argument(
+        "--max_samples",
+        type=int,
+        default=0,
+        help="Optional cap per split for faster smoke runs (0 = no cap).",
+    )
 
     args = parser.parse_args()
 
@@ -207,6 +213,15 @@ def main():
     train_ds = load_dreamcatcher_hf_split("train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
     val_ds = load_dreamcatcher_hf_split("validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
     test_ds = load_dreamcatcher_hf_split("test", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
+
+    if args.max_samples and args.max_samples > 0:
+        n_tr = min(args.max_samples, len(train_ds))
+        n_va = min(args.max_samples, len(val_ds))
+        n_te = min(args.max_samples, len(test_ds))
+        train_ds = train_ds.select(range(n_tr))
+        val_ds = val_ds.select(range(n_va))
+        test_ds = test_ds.select(range(n_te))
+        print(f"[kd] max_samples applied: train={n_tr} val={n_va} test={n_te}")
 
     train_dl = DataLoader(
         train_ds,

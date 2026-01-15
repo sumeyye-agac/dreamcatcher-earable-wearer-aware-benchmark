@@ -24,6 +24,7 @@ python3 -m src.training.train_kd \
   --dataset_mode smoke \
   --epochs 1 \
   --batch_size 4 \
+  --max_samples 512 \
   --lr 1e-3 \
   --alpha 0.7 \
   --tau 5 \
@@ -38,6 +39,7 @@ python3 -m src.training.train_kd \
   --dataset_mode smoke \
   --epochs 1 \
   --batch_size 4 \
+  --max_samples 512 \
   --lr 1e-3 \
   --alpha 0.7 \
   --tau 5 \
