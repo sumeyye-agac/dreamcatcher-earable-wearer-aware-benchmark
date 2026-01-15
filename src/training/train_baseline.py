@@ -112,6 +112,18 @@ def main():
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument(
+        "--early_stop_patience",
+        type=int,
+        default=0,
+        help="Early stopping patience on val_f1 (0 disables early stopping).",
+    )
+    parser.add_argument(
+        "--early_stop_min_delta",
+        type=float,
+        default=0.0,
+        help="Minimum val_f1 improvement to reset patience.",
+    )
 
     # audio
     parser.add_argument("--sr", type=int, default=16000)
@@ -222,16 +234,27 @@ def main():
     best_val_f1 = -1.0
     best_val_metrics = None
     best_state = None
+    best_epoch = 0
+    epochs_ran = 0
+    no_improve = 0
+    patience = int(args.early_stop_patience) if args.early_stop_patience else 0
+    min_delta = float(args.early_stop_min_delta) if args.early_stop_min_delta else 0.0
 
     for epoch in range(1, args.epochs + 1):
+        epochs_ran = epoch
         t_ep = time.time()
         tr_loss, tr_m = run_one_epoch(model, train_dl, opt, loss_fn, device)
         va_loss, va_m = evaluate(model, val_dl, loss_fn, device)
 
-        if va_m.f1_macro > best_val_f1:
+        improved = va_m.f1_macro > (best_val_f1 + min_delta)
+        if improved:
             best_val_f1 = va_m.f1_macro
             best_val_metrics = va_m
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            best_epoch = epoch
+            no_improve = 0
+        else:
+            no_improve += 1
 
         print(
             f"epoch={epoch} "
@@ -243,6 +266,12 @@ def main():
             t0=t_ep,
             detail=f"epoch={epoch} train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} val_loss={va_loss:.4f} val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}",
         )
+
+        if patience > 0 and no_improve >= patience:
+            msg = f"early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1:.6f}"
+            print(msg)
+            slog.log("early_stop", detail=msg)
+            break
 
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -265,6 +294,8 @@ def main():
         "teacher": "",
         "seed": args.seed,
         "epochs": args.epochs,
+        "best_epoch": best_epoch,
+        "epochs_ran": epochs_ran,
         "batch_size": args.batch_size,
         "lr": args.lr,
         "sr": args.sr,
@@ -302,6 +333,8 @@ def main():
         rd / "metrics.json",
         {
             "run_name": run_name,
+            "best_epoch": best_epoch,
+            "epochs_ran": epochs_ran,
             "best_val": (best_val_metrics.__dict__ if best_val_metrics is not None else None),
             "test": te_m.__dict__,
             "params": param_count,

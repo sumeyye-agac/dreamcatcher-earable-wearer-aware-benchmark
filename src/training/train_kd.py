@@ -179,6 +179,18 @@ def main():
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--early_stop_patience",
+        type=int,
+        default=0,
+        help="Early stopping patience on val_f1 (0 disables early stopping).",
+    )
+    parser.add_argument(
+        "--early_stop_min_delta",
+        type=float,
+        default=0.0,
+        help="Minimum val_f1 improvement to reset patience.",
+    )
 
     parser.add_argument("--sr", type=int, default=16000)
     parser.add_argument("--n_mels", type=int, default=64)
@@ -270,21 +282,36 @@ def main():
     best_val_f1 = -1.0
     best_val_metrics = None
     best_state = None
+    best_epoch = 0
+    epochs_ran = 0
+    no_improve = 0
+    patience = int(args.early_stop_patience) if args.early_stop_patience else 0
+    min_delta = float(args.early_stop_min_delta) if args.early_stop_min_delta else 0.0
 
     for epoch in range(1, args.epochs + 1):
+        epochs_ran = epoch
         tr_loss, tr_m = run_train_epoch(student, teacher, train_dl, opt, device, args.alpha, args.tau)
         va_m = evaluate(student, val_dl, device)
 
-        if va_m.f1_macro > best_val_f1:
+        improved = va_m.f1_macro > (best_val_f1 + min_delta)
+        if improved:
             best_val_f1 = va_m.f1_macro
             best_val_metrics = va_m
             best_state = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
+            best_epoch = epoch
+            no_improve = 0
+        else:
+            no_improve += 1
 
         print(
             f"epoch={epoch} "
             f"train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} | "
             f"val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}"
         )
+
+        if patience > 0 and no_improve >= patience:
+            print(f"[kd] early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1:.6f}")
+            break
 
     if best_state is not None:
         student.load_state_dict(best_state)
@@ -305,6 +332,8 @@ def main():
         "teacher": args.teacher_name,
         "seed": args.seed,
         "epochs": args.epochs,
+        "best_epoch": best_epoch,
+        "epochs_ran": epochs_ran,
         "batch_size": args.batch_size,
         "lr": args.lr,
         "sr": args.sr,
@@ -341,6 +370,8 @@ def main():
         rd / "metrics.json",
         {
             "run_name": run_name,
+            "best_epoch": best_epoch,
+            "epochs_ran": epochs_ran,
             "best_val": (best_val_metrics.__dict__ if best_val_metrics is not None else None),
             "test": te_m.__dict__,
             "params": param_count,
