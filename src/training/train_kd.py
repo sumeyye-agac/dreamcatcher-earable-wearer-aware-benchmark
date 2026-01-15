@@ -5,9 +5,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from datasets import load_dataset
 
 from src.data.audio_features import compute_log_mel
+from src.data.dreamcatcher_hf import LABELS, LABEL2ID, load_dreamcatcher_hf_split
 from src.evaluation.metrics import macro_f1
 from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
@@ -15,10 +15,6 @@ from src.models.crnn_cbam import CRNN_CBAM
 from src.models.teacher.wav2vec2_teacher import Wav2Vec2Teacher
 from src.utils.reproducibility import set_seed
 from src.utils.benchmarking import count_params, measure_cpu_latency, append_to_leaderboard
-
-# Stable label space (must match dreamcatcher_hf.py)
-LABELS = ["breathe", "movements", "swallow", "bruxism", "snore"]
-LABEL2ID = {k: i for i, k in enumerate(LABELS)}
 
 
 def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
@@ -48,7 +44,12 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
     raws = []
 
     for row in batch:
-        audio = row["audio_data"]
+        if "audio" in row:
+            audio = row["audio"]
+        elif "audio_data" in row:
+            audio = row["audio_data"]
+        else:
+            raise KeyError("Expected 'audio' (or legacy 'audio_data') in dataset row.")
         y = np.asarray(audio["array"], dtype=np.float32)
         a_sr = int(audio["sampling_rate"])
 
@@ -62,8 +63,19 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
         xs_mel.append(compute_log_mel(y=y, sr=sr, n_mels=n_mels))
         raws.append(y)
 
-        label_str = row.get("event_label", None) or row.get("label", None)
-        ys.append(LABEL2ID[label_str])
+        label_val = row.get("label", None)
+        if label_val is None:
+            label_val = row.get("event_label", None)
+        if label_val is None:
+            label_val = row.get("class", None)
+        if label_val is None:
+            raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
+
+        if isinstance(label_val, (int, np.integer)):
+            ys.append(int(label_val))
+        else:
+            label_str = str(label_val)
+            ys.append(LABEL2ID[label_str])
 
     # pad mel
     max_t = max(x.shape[1] for x in xs_mel)
@@ -169,6 +181,8 @@ def main():
     parser.add_argument("--out_csv", type=str, default="results/leaderboard.csv")
     parser.add_argument("--latency_T", type=int, default=400)
     parser.add_argument("--teacher_name", type=str, default="facebook/wav2vec2-base")
+    parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
+    parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
 
     args = parser.parse_args()
 
@@ -177,9 +191,11 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    train_ds = load_dataset("THU-PI-Sensing/DreamCatcher", split="train")
-    val_ds = load_dataset("THU-PI-Sensing/DreamCatcher", split="validation")
-    test_ds = load_dataset("THU-PI-Sensing/DreamCatcher", split="test")
+    run_name = args.run_name if args.run_name else f"kd_{args.student}_a{args.alpha}_t{args.tau}_seed{args.seed}"
+
+    train_ds = load_dreamcatcher_hf_split("train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
+    val_ds = load_dreamcatcher_hf_split("validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
+    test_ds = load_dreamcatcher_hf_split("test", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
 
     train_dl = DataLoader(
         train_ds,
@@ -232,8 +248,6 @@ def main():
     # Benchmark logging
     param_count = count_params(student)
     lat_ms = measure_cpu_latency(student, input_shape=(1, 1, args.n_mels, args.latency_T))
-
-    run_name = args.run_name if args.run_name else f"kd_{args.student}_a{args.alpha}_t{args.tau}_seed{args.seed}"
 
     row = {
         "run_name": run_name,

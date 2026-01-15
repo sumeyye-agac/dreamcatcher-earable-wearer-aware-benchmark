@@ -51,8 +51,8 @@ learning perspective.
 
 2. **Create a virtual environment:**
    ```bash
-   python -m venv dreamcatcher-env
-   source dreamcatcher-env/bin/activate  # On Windows: dreamcatcher-env\Scripts\activate
+   python -m venv .venv-earable
+   source .venv-earable/bin/activate  # On Windows: .venv-earable\Scripts\activate
    ```
 
 3. **Install dependencies:**
@@ -66,7 +66,7 @@ learning perspective.
    - Request access on the [HuggingFace dataset page](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher)
    - After approval, authenticate:
      ```bash
-     huggingface-cli login
+     hf auth login
      ```
    - Enter your HuggingFace token when prompted
 
@@ -160,9 +160,17 @@ All experiments are scriptable and log results to `results/leaderboard.csv`.
 ```bash
 bash experiments/run_audio_benchmark.sh
 ```
+**Quick smoke run (fast end-to-end sanity check):**
+```bash
+bash experiments/run_audio_smoke.sh
+```
 **Knowledge distillation:**
 ```bash
 bash experiments/run_kd.sh
+```
+**KD smoke run:**
+```bash
+bash experiments/run_kd_smoke.sh
 ```
 **Reporting and plots:**
 ```bash

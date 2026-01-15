@@ -10,6 +10,7 @@ import threading
 
 import numpy as np
 from datasets import DownloadConfig, load_dataset_builder
+from huggingface_hub import get_token
 
 from .audio_features import compute_log_mel
 from src.utils.runlog import StepLogger
@@ -98,6 +99,12 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
         }
 
     download_config = DownloadConfig(cache_dir=effective_cache_dir, token=True)
+    if download_config.token is True and not get_token():
+        raise RuntimeError(
+            "HuggingFace token not found. The DreamCatcher dataset is gated.\n"
+            "1) Request access: https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher\n"
+            "2) Login: `hf auth login` (or set env var `HUGGINGFACE_HUB_TOKEN` / `HF_TOKEN`)."
+        )
 
     if logger is not None:
         logger.log("dataset_builder_prepare_start", detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}")
@@ -106,6 +113,7 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
         "THU-PI-Sensing/DreamCatcher",
         name="sleep_event_classification",
         cache_dir=effective_cache_dir,
+        download_config=download_config,
     )
     builder.config.data_files = data_files
     builder.config.imu_files = imu_files
@@ -251,3 +259,22 @@ class DreamCatcherHFAudioDataset:
             y_id = LABEL2ID[label_str]
 
         return x, y_id
+
+
+def load_dreamcatcher_hf_split(
+    split: str,
+    *,
+    dataset_mode: str = "full",
+    run_name: str = "",
+    steps_csv: str = "results/run_steps.csv",
+):
+    """
+    Convenience loader for HuggingFace DreamCatcher splits with the same
+    token-aware builder + dataset_mode logic used by `DreamCatcherHFAudioDataset`.
+
+    Returns a `datasets.Dataset` (rows still contain raw audio dicts).
+    """
+    cache_dir = os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
+    logger = StepLogger(run_name=run_name, csv_path=steps_csv)
+    builder = _get_builder(dataset_mode=dataset_mode, cache_dir=cache_dir, logger=logger)
+    return builder.as_dataset(split=split)

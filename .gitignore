@@ -3,6 +3,7 @@ dreamcatcher-env/
 venv/
 env/
 .venv/
+.venv-earable/
 
 # Python
 __pycache__/
@@ -27,3 +28,4 @@ Thumbs.db
 checkpoints/
 wandb/
 results/run_steps.csv
+results/run_steps_*.csv
