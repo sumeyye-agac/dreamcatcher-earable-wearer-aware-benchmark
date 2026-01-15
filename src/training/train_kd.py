@@ -54,11 +54,22 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
         a_sr = int(audio["sampling_rate"])
 
         if y.ndim == 2:
-            y = y.mean(axis=1)
+            if y.shape[0] == 0 or y.shape[1] == 0:
+                y = np.zeros((0,), dtype=np.float32)
+            else:
+                y = y.mean(axis=1)
+
+        # sanitize NaN/inf
+        if y.size > 0:
+            y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
 
         if a_sr != sr:
             import librosa
             y = librosa.resample(y, orig_sr=a_sr, target_sr=sr)
+
+        # Avoid degenerate spectrograms / teacher crashes on extremely short clips
+        if y.shape[0] < 1024:
+            y = np.pad(y, (0, 1024 - y.shape[0]), mode="constant")
 
         xs_mel.append(compute_log_mel(y=y, sr=sr, n_mels=n_mels))
         raws.append(y)

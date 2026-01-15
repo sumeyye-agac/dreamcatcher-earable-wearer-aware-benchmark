@@ -24,6 +24,12 @@ class Wav2Vec2Teacher(nn.Module):
         audio_np = audio_16k.detach().cpu().numpy()
         inputs = self.processor(audio_np, sampling_rate=16000, return_tensors="pt", padding=True)
         input_values = inputs.input_values.to(device)
+        # Wav2Vec2 has a conv feature extractor; extremely short clips can crash (kernel > input).
+        # Pad to a safe minimum length.
+        min_len = 10
+        if input_values.shape[1] < min_len:
+            pad = min_len - input_values.shape[1]
+            input_values = torch.nn.functional.pad(input_values, (0, pad))
         outputs = self.encoder(input_values)
         pooled = outputs.last_hidden_state.mean(dim=1)
         return self.head(pooled)
