@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from datetime import datetime, timezone
+from sklearn.metrics import confusion_matrix
 
 from src.data.audio_features import compute_log_mel
 from src.data.dreamcatcher_hf import LABELS, LABEL2ID, load_dreamcatcher_hf_split
@@ -154,7 +157,7 @@ def run_train_epoch(student, teacher, dl, opt, device, alpha, tau):
 
 
 @torch.no_grad()
-def evaluate(student, dl, device):
+def evaluate(student, dl, device, *, return_preds: bool = False):
     student.eval()
     all_true, all_pred = [], []
 
@@ -168,6 +171,8 @@ def evaluate(student, dl, device):
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
     m = classification_metrics(all_true, all_pred)
+    if return_preds:
+        return m, all_true, all_pred
     return m
 
 
@@ -232,11 +237,17 @@ def main():
     args = parser.parse_args()
     import time
     t_run0 = time.time()
+    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
 
     if args.run_name:
         run_name = args.run_name
@@ -328,16 +339,28 @@ def main():
     if best_state is not None:
         student.load_state_dict(best_state)
 
-    te_m = evaluate(student, test_dl, device)
+    te_m, te_true, te_pred = evaluate(student, test_dl, device, return_preds=True)
     print(f"test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+
+    # Save test confusion matrix as a per-run artifact (CSV).
+    cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
+    cm_path = rd / "test_confusion_matrix.csv"
+    with cm_path.open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["true\\pred", *LABELS])
+        for i, row_vals in enumerate(cm.tolist()):
+            w.writerow([LABELS[i], *row_vals])
 
     # Benchmark logging
     param_count = count_params(student)
     model_size_mb = estimate_model_size_mb(student)
     lat_ms = measure_cpu_latency(student, input_shape=(1, 1, args.n_mels, args.latency_T))
     wall_time_s = time.time() - t_run0
+    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     row = {
+        "run_started_at_utc": run_started_at_utc,
+        "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
         "task": "audio_event_label",
         "model": args.student,
@@ -374,6 +397,7 @@ def main():
         "model_size_mb": round(model_size_mb, 4),
         "cpu_latency_ms": round(lat_ms, 4),
         "wall_time_s": round(wall_time_s, 3),
+        "test_cm_csv": str(cm_path),
     }
 
     append_to_leaderboard(args.out_csv, row)
@@ -390,6 +414,9 @@ def main():
             "model_size_mb": model_size_mb,
             "cpu_latency_ms": lat_ms,
             "wall_time_s": wall_time_s,
+            "run_started_at_utc": run_started_at_utc,
+            "run_finished_at_utc": run_finished_at_utc,
+            "test_confusion_matrix_csv": str(cm_path),
         },
     )
     print("Done.")

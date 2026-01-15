@@ -155,13 +155,12 @@ def append_to_leaderboard(csv_path: str, row: Dict):
     Append a row to the leaderboard CSV file.
     Creates the file with headers if it doesn't exist.
     """
-    file_exists = os.path.exists(csv_path)
-    
     # Ensure directory exists
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     
     # Define fieldnames based on the row structure
     fieldnames = [
+        "run_started_at_utc", "run_finished_at_utc",
         "run_name", "task", "model", "teacher", "seed", "epochs", "best_epoch", "epochs_ran", "batch_size", "lr",
         "sr", "n_mels", "rnn_hidden", "rnn_layers", "cbam_reduction", "cbam_sa_kernel", "att_mode",
         "alpha", "tau",
@@ -169,6 +168,7 @@ def append_to_leaderboard(csv_path: str, row: Dict):
         "best_val_f1", "best_val_acc", "best_val_precision_macro", "best_val_recall_macro", "best_val_balanced_acc",
         "test_f1", "test_acc", "test_precision_macro", "test_recall_macro", "test_balanced_acc",
         "params", "model_size_mb", "cpu_latency_ms", "wall_time_s",
+        "test_cm_csv",
     ]
 
     # Concurrency-safe: take a lock for normalize + append.

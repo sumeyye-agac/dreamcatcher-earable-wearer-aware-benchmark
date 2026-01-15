@@ -71,6 +71,8 @@ def suite_audio_smoke(args: argparse.Namespace) -> None:
                 str(args.batch_size),
                 "--lr",
                 str(args.lr),
+                "--max_samples",
+                str(args.max_samples),
                 "--run_name",
                 run_name,
                 *extra,
@@ -366,6 +368,12 @@ def main(argv: list[str] | None = None) -> int:
     p_suite.add_argument("--epochs", type=int, default=1)
     p_suite.add_argument("--batch_size", type=int, default=8)
     p_suite.add_argument("--lr", type=float, default=1e-3)
+    p_suite.add_argument(
+        "--max_samples",
+        type=int,
+        default=512,
+        help="Only used by audio-smoke to keep runs fast (per split cap).",
+    )
 
     p_sweep = sub.add_parser("sweep", help="Run a simple grid-search style sweep.")
     p_sweep_sub = p_sweep.add_subparsers(dest="sweep_cmd", required=True)

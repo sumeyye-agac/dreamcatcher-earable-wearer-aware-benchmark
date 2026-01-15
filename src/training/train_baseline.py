@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import time
+from datetime import datetime, timezone
+
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from sklearn.metrics import confusion_matrix
 
 from src.data.dreamcatcher_hf import DreamCatcherHFAudioDataset, DreamCatcherHFAudioConfig, LABELS
 from src.evaluation.metrics import classification_metrics
@@ -83,7 +87,7 @@ def run_one_epoch(model, dl, opt, loss_fn, device):
 
 
 @torch.no_grad()
-def evaluate(model, dl, loss_fn, device):
+def evaluate(model, dl, loss_fn, device, *, return_preds: bool = False):
     model.eval()
     total_loss = 0.0
     all_true, all_pred = [], []
@@ -100,6 +104,8 @@ def evaluate(model, dl, loss_fn, device):
 
     avg_loss = total_loss / max(1, len(dl.dataset))
     m = classification_metrics(all_true, all_pred)
+    if return_preds:
+        return avg_loss, m, all_true, all_pred
     return avg_loss, m
 
 
@@ -163,9 +169,16 @@ def main():
     parser.add_argument("--latency_T", type=int, default=400)
     parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
     parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
+    parser.add_argument(
+        "--max_samples",
+        type=int,
+        default=0,
+        help="Optional cap per split for faster smoke runs (0 = no cap).",
+    )
 
     args = parser.parse_args()
     t_run0 = time.time()
+    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     if args.run_name:
         run_name = args.run_name
@@ -210,6 +223,7 @@ def main():
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
+        max_samples=args.max_samples if args.max_samples else 0,
     )
     val_ds = DreamCatcherHFAudioDataset(
         split="validation",
@@ -218,6 +232,7 @@ def main():
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
+        max_samples=args.max_samples if args.max_samples else 0,
     )
     test_ds = DreamCatcherHFAudioDataset(
         split="test",
@@ -226,6 +241,7 @@ def main():
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
+        max_samples=args.max_samples if args.max_samples else 0,
     )
     print(f"All datasets loaded: train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}\n")
     slog.log("load_datasets_done", t0=t_ds, detail=f"train={len(train_ds)} val={len(val_ds)} test={len(test_ds)}")
@@ -234,7 +250,12 @@ def main():
     val_dl = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
     test_dl = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     model = make_model(args.model, n_classes=len(LABELS), args=args).to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -287,16 +308,28 @@ def main():
 
     t_test = time.time()
     slog.log("test_eval_start")
-    te_loss, te_m = evaluate(model, test_dl, loss_fn, device)
+    te_loss, te_m, te_true, te_pred = evaluate(model, test_dl, loss_fn, device, return_preds=True)
     print(f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
     slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+
+    # Save test confusion matrix as a per-run artifact (CSV).
+    cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
+    cm_path = rd / "test_confusion_matrix.csv"
+    with cm_path.open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["true\\pred", *LABELS])
+        for i, row_vals in enumerate(cm.tolist()):
+            w.writerow([LABELS[i], *row_vals])
 
     param_count = count_params(model)
     model_size_mb = estimate_model_size_mb(model)
     lat_ms = measure_cpu_latency(model, input_shape=(1, 1, args.n_mels, args.latency_T))
     wall_time_s = time.time() - t_run0
+    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     row = {
+        "run_started_at_utc": run_started_at_utc,
+        "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
         "task": "audio_event_label",
         "model": args.model,
@@ -333,6 +366,7 @@ def main():
         "model_size_mb": round(model_size_mb, 4),
         "cpu_latency_ms": round(lat_ms, 4),
         "wall_time_s": round(wall_time_s, 3),
+        "test_cm_csv": str(cm_path),
     }
 
     append_to_leaderboard(args.out_csv, row)
@@ -350,6 +384,9 @@ def main():
             "model_size_mb": model_size_mb,
             "cpu_latency_ms": lat_ms,
             "wall_time_s": wall_time_s,
+            "run_started_at_utc": run_started_at_utc,
+            "run_finished_at_utc": run_finished_at_utc,
+            "test_confusion_matrix_csv": str(cm_path),
         },
     )
     slog.log("leaderboard_written", detail=f"path={args.out_csv}")

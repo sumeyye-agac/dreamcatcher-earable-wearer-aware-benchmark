@@ -188,6 +188,7 @@ class DreamCatcherHFAudioDataset:
         run_name: str = "",
         steps_csv: str = "results/run_steps.csv",
         cache_dir: str | None = None,
+        max_samples: int = 0,
     ):
         self.cfg = cfg or DreamCatcherHFAudioConfig()
         self._logger = StepLogger(run_name=run_name, csv_path=steps_csv)
@@ -216,7 +217,14 @@ class DreamCatcherHFAudioDataset:
 
         t_as = time.time()
         self.ds = builder.as_dataset(split=split)
-        self._logger.log("dataset_split_loaded", t0=t_as, detail=f"split={split} len={len(self.ds)}")
+        if max_samples and max_samples > 0:
+            n = min(int(max_samples), len(self.ds))
+            self.ds = self.ds.select(range(n))
+        self._logger.log(
+            "dataset_split_loaded",
+            t0=t_as,
+            detail=f"split={split} len={len(self.ds)} max_samples={max_samples if max_samples else ''}",
+        )
         print(f"Dataset loaded successfully: {len(self.ds)} samples\n", file=sys.stderr)
 
     def __len__(self) -> int:
