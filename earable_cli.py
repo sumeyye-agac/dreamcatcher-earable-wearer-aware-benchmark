@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import itertools
+import json
 import subprocess
 import sys
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
 
 def _require_hf_token() -> None:
@@ -264,6 +266,83 @@ def sweep_kd(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
 
+def summarize_runs(args: argparse.Namespace) -> None:
+    base = Path(args.runs_dir)
+    if not base.exists():
+        raise SystemExit(
+            f"Runs directory not found: {base}\n"
+            "Run a training/sweep first (it will create results/runs/<run_name>/), then re-run summarize."
+        )
+
+    prefix = args.prefix or ""
+    metric = args.metric
+
+    runs: list[dict[str, Any]] = []
+    for d in sorted(base.iterdir()):
+        if not d.is_dir():
+            continue
+        run_name = d.name
+        if prefix and not run_name.startswith(prefix):
+            continue
+        args_path = d / "args.json"
+        metrics_path = d / "metrics.json"
+        if not args_path.exists() or not metrics_path.exists():
+            continue
+        try:
+            a = json.loads(args_path.read_text(encoding="utf-8"))
+            m = json.loads(metrics_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        runs.append({"run_name": run_name, "args": a, "metrics": m})
+
+    if not runs:
+        raise SystemExit(f"No runs found under {base} matching prefix={prefix!r}.")
+
+    def _get_metric(r: dict[str, Any], key: str):
+        # Prefer metrics.json -> test.<key>, fallback to best_val.<key>
+        m = r["metrics"]
+        if isinstance(m.get("test"), dict) and key in m["test"]:
+            return m["test"].get(key)
+        if isinstance(m.get("best_val"), dict) and key in m["best_val"]:
+            return m["best_val"].get(key)
+        return None
+
+    # Collect unique hyperparams of interest (KD + common)
+    keys = ["student", "model", "alpha", "tau", "lr", "batch_size", "dataset_mode", "max_samples"]
+    uniq: dict[str, set[str]] = {k: set() for k in keys}
+    for r in runs:
+        a = r["args"]
+        for k in keys:
+            if k in a and a[k] not in ("", None):
+                uniq[k].add(str(a[k]))
+
+    print(f"[earable] runs_dir={base}")
+    print(f"[earable] prefix={prefix!r}")
+    print(f"[earable] n_runs={len(runs)}")
+    for k in keys:
+        if uniq[k]:
+            vals = ", ".join(sorted(uniq[k])) if len(uniq[k]) <= 20 else f"{len(uniq[k])} values"
+            print(f"[earable] {k}: {vals}")
+
+    # Rank by metric
+    scored = []
+    for r in runs:
+        v = _get_metric(r, metric)
+        if v is None:
+            continue
+        scored.append((float(v), r))
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    topk = max(1, int(args.topk))
+    print(f"\n[earable] top{min(topk, len(scored))} by {metric}:")
+    for v, r in scored[:topk]:
+        a = r["args"]
+        print(
+            f"  - {r['run_name']}: {metric}={v:.6f} "
+            f"(alpha={a.get('alpha','')}, tau={a.get('tau','')}, lr={a.get('lr','')}, bs={a.get('batch_size','')}, mode={a.get('dataset_mode','')})"
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="earable")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -301,6 +380,12 @@ def main(argv: list[str] | None = None) -> int:
     p_kd.add_argument("--cbam_reduction", type=int, default=8)
     p_kd.add_argument("--cbam_sa_kernel", type=int, default=7)
 
+    p_sum = sub.add_parser("summarize", help="Summarize runs under results/runs (e.g., after a sweep).")
+    p_sum.add_argument("--runs_dir", type=str, default="results/runs")
+    p_sum.add_argument("--prefix", type=str, default="", help="Only include run dirs whose name starts with this prefix.")
+    p_sum.add_argument("--metric", type=str, default="f1_macro", help="Metric key in metrics.json (default: test.f1_macro).")
+    p_sum.add_argument("--topk", type=int, default=10)
+
     args = parser.parse_args(argv)
 
     # Ensure we run from repo root if invoked elsewhere.
@@ -327,6 +412,9 @@ def main(argv: list[str] | None = None) -> int:
             sweep_kd(args)
             return 0
         raise SystemExit(f"Unknown sweep: {args.sweep_cmd}")
+    if args.cmd == "summarize":
+        summarize_runs(args)
+        return 0
 
     raise SystemExit("unreachable")
 

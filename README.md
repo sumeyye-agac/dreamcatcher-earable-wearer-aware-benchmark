@@ -221,6 +221,15 @@ Tip: add `--dry_run` to print the commands without running them.
 Note: when using `--jobs > 1`, runs will append to `results/leaderboard.csv` concurrently; the repo uses a simple file lock
 to prevent CSV corruption.
 
+### Summarize what you tried (after a sweep)
+
+Runs write per-run artifacts to `results/runs/<run_name>/`. You can summarize a sweep by prefix:
+
+```bash
+# Example: summarize the most recent sweep (replace prefix)
+earable summarize --prefix kd_sweep_ --metric f1_macro --topk 10
+```
+
 ## Key Takeaways
 
 - Lightweight CRNN models benefit significantly from attention mechanisms in earable audio event recognition.
