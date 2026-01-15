@@ -212,10 +212,14 @@ earable sweep kd \
   --lr 1e-3 \
   --batch_size 4 \
   --dataset_mode smoke \
-  --max_samples 512
+  --max_samples 512 \
+  --jobs 2
 ```
 
 Tip: add `--dry_run` to print the commands without running them.
+
+Note: when using `--jobs > 1`, runs will append to `results/leaderboard.csv` concurrently; the repo uses a simple file lock
+to prevent CSV corruption.
 
 ## Key Takeaways
 

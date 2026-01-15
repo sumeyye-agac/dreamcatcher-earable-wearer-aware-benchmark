@@ -2,6 +2,7 @@ import torch
 import csv
 import os
 from typing import Dict
+from contextlib import contextmanager
 
 
 def count_params(model: torch.nn.Module) -> int:
@@ -58,6 +59,41 @@ def measure_cpu_latency(model: torch.nn.Module, input_shape: tuple, n_warmup: in
             times.append((end - start) * 1000)  # Convert to milliseconds
     
     return sum(times) / len(times)
+
+
+@contextmanager
+def _file_lock(lock_path: str):
+    """
+    Cross-platform best-effort file lock.
+    Uses:
+      - fcntl.flock on POSIX
+      - msvcrt.locking on Windows
+    """
+    os.makedirs(os.path.dirname(lock_path) or ".", exist_ok=True)
+    f = open(lock_path, "a+")
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            # lock 1 byte region
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        finally:
+            f.close()
 
 
 def _normalize_leaderboard_csv(csv_path: str, fieldnames: list[str]) -> None:
@@ -135,8 +171,10 @@ def append_to_leaderboard(csv_path: str, row: Dict):
         "params", "model_size_mb", "cpu_latency_ms", "wall_time_s",
     ]
 
-    _normalize_leaderboard_csv(csv_path, fieldnames)
-
-    with open(csv_path, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writerow(row)
+    # Concurrency-safe: take a lock for normalize + append.
+    lock_path = csv_path + ".lock"
+    with _file_lock(lock_path):
+        _normalize_leaderboard_csv(csv_path, fieldnames)
+        with open(csv_path, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writerow(row)

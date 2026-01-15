@@ -5,6 +5,7 @@ import itertools
 import subprocess
 import sys
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
@@ -175,6 +176,11 @@ def sweep_kd(args: argparse.Namespace) -> None:
 
     print(f"[earable] KD sweep: {len(combos)} runs", flush=True)
 
+    jobs = int(args.jobs) if args.jobs else 1
+    if jobs < 1:
+        jobs = 1
+
+    runs: list[tuple[str, list[str]]] = []
     for student, alpha, tau, lr, bs in combos:
         extra = []
         if student in {"crnn", "crnn_cbam"}:
@@ -222,7 +228,40 @@ def sweep_kd(args: argparse.Namespace) -> None:
             print(f"[earable] $ {' '.join(cmd)}", flush=True)
             continue
 
-        _run(cmd)
+        runs.append((run_name, cmd))
+
+    if args.dry_run:
+        return
+
+    if jobs == 1:
+        for run_name, cmd in runs:
+            print(f"[earable] run={run_name}", flush=True)
+            _run(cmd)
+        return
+
+    print(f"[earable] Running in parallel: jobs={jobs}", flush=True)
+
+    def _worker(rn: str, c: list[str]) -> str:
+        print(f"[earable] run_start={rn}", flush=True)
+        subprocess.run(c, check=True)
+        print(f"[earable] run_done={rn}", flush=True)
+        return rn
+
+    failures: list[tuple[str, str]] = []
+    with ThreadPoolExecutor(max_workers=jobs) as ex:
+        futs = {ex.submit(_worker, rn, c): rn for rn, c in runs}
+        for fut in as_completed(futs):
+            rn = futs[fut]
+            try:
+                fut.result()
+            except Exception as e:
+                failures.append((rn, str(e)))
+
+    if failures:
+        print("[earable] Sweep finished with failures:", file=sys.stderr)
+        for rn, err in failures:
+            print(f"  - {rn}: {err}", file=sys.stderr)
+        raise SystemExit(1)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -256,6 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     p_kd.add_argument("--run_prefix", type=str, default="", help="Prefix for run_name; defaults to timestamped prefix")
     p_kd.add_argument("--max_runs", type=int, default=0, help="Optional cap on number of runs (0 = no cap)")
     p_kd.add_argument("--dry_run", action="store_true", help="Print commands without executing")
+    p_kd.add_argument("--jobs", type=int, default=1, help="Number of parallel workers (default: 1)")
     p_kd.add_argument("--rnn_hidden", type=int, default=64)
     p_kd.add_argument("--rnn_layers", type=int, default=1)
     p_kd.add_argument("--cbam_reduction", type=int, default=8)
