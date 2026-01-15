@@ -43,6 +43,7 @@ learning perspective.
 
 - Python 3.9+ (tested with Python 3.12)
 - ~50GB free disk space (for dataset download and cache)
+- For full (non-smoke) runs, you may need **significantly more** free disk due to HuggingFace caching.
 - HuggingFace account with access to the DreamCatcher dataset
 
 ### Setup
@@ -64,6 +65,23 @@ learning perspective.
    python3 -m pip install -r requirements.txt
    python3 -m pip install -e .
    ```
+
+### If you hit "No space left on device"
+
+Full dataset preparation can be large. You can move the HuggingFace datasets cache to another disk by either:
+
+- Setting an environment variable:
+
+```bash
+export HF_DATASETS_CACHE="/path/with/space/hf_datasets_cache"
+```
+
+- Or passing `--cache_dir` to training scripts:
+
+```bash
+python3 -m src.training.train_baseline --cache_dir "/path/with/space/hf_datasets_cache" ...
+python3 -m src.training.train_kd --cache_dir "/path/with/space/hf_datasets_cache" ...
+```
 
 4. **Authenticate with HuggingFace:**
    The DreamCatcher dataset is gated and requires authentication.

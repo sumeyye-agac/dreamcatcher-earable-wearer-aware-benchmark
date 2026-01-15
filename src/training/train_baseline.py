@@ -129,6 +129,12 @@ def main():
     parser.add_argument("--sr", type=int, default=16000)
     parser.add_argument("--n_mels", type=int, default=64)
     parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default="",
+        help="Optional HF datasets cache dir override (use this if disk is full).",
+    )
+    parser.add_argument(
         "--invalid_audio_policy",
         type=str,
         default="skip",
@@ -203,6 +209,7 @@ def main():
         dataset_mode=args.dataset_mode,
         run_name=run_name,
         steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
     val_ds = DreamCatcherHFAudioDataset(
         split="validation",
@@ -210,6 +217,7 @@ def main():
         dataset_mode=args.dataset_mode,
         run_name=run_name,
         steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
     test_ds = DreamCatcherHFAudioDataset(
         split="test",
@@ -217,6 +225,7 @@ def main():
         dataset_mode=args.dataset_mode,
         run_name=run_name,
         steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
     print(f"All datasets loaded: train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}\n")
     slog.log("load_datasets_done", t0=t_ds, detail=f"train={len(train_ds)} val={len(val_ds)} test={len(test_ds)}")

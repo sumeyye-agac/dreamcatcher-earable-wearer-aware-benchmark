@@ -187,6 +187,7 @@ class DreamCatcherHFAudioDataset:
         dataset_mode: str = "full",
         run_name: str = "",
         steps_csv: str = "results/run_steps.csv",
+        cache_dir: str | None = None,
     ):
         self.cfg = cfg or DreamCatcherHFAudioConfig()
         self._logger = StepLogger(run_name=run_name, csv_path=steps_csv)
@@ -201,8 +202,8 @@ class DreamCatcherHFAudioDataset:
             print(f"  Run Name: {run_name}", file=sys.stderr)
         print(f"{'='*60}\n", file=sys.stderr)
         
-        cache_dir = os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
-        du = shutil.disk_usage(os.path.expanduser("~"))
+        cache_dir = cache_dir or os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
+        du = shutil.disk_usage(cache_dir)
         self._logger.log(
             "dataset_init",
             detail=f"split={split} mode={dataset_mode} cache_dir={cache_dir} free_gb={du.free/1e9:.1f}",
@@ -324,6 +325,7 @@ def load_dreamcatcher_hf_split(
     dataset_mode: str = "full",
     run_name: str = "",
     steps_csv: str = "results/run_steps.csv",
+    cache_dir: str | None = None,
 ):
     """
     Convenience loader for HuggingFace DreamCatcher splits with the same
@@ -331,7 +333,7 @@ def load_dreamcatcher_hf_split(
 
     Returns a `datasets.Dataset` (rows still contain raw audio dicts).
     """
-    cache_dir = os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
+    cache_dir = cache_dir or os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
     logger = StepLogger(run_name=run_name, csv_path=steps_csv)
     builder = _get_builder(dataset_mode=dataset_mode, cache_dir=cache_dir, logger=logger)
     return builder.as_dataset(split=split)

@@ -194,6 +194,12 @@ def main():
 
     parser.add_argument("--sr", type=int, default=16000)
     parser.add_argument("--n_mels", type=int, default=64)
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default="",
+        help="Optional HF datasets cache dir override (use this if disk is full).",
+    )
 
     parser.add_argument("--alpha", type=float, default=0.7)
     parser.add_argument("--tau", type=float, default=5.0)
@@ -241,9 +247,15 @@ def main():
     write_json(rd / "args.json", vars(args) | {"run_name": run_name})
     write_json(rd / "env.json", env_snapshot())
 
-    train_ds = load_dreamcatcher_hf_split("train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
-    val_ds = load_dreamcatcher_hf_split("validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
-    test_ds = load_dreamcatcher_hf_split("test", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
+    train_ds = load_dreamcatcher_hf_split(
+        "train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+    )
+    val_ds = load_dreamcatcher_hf_split(
+        "validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+    )
+    test_ds = load_dreamcatcher_hf_split(
+        "test", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+    )
 
     if args.max_samples and args.max_samples > 0:
         n_tr = min(args.max_samples, len(train_ds))
