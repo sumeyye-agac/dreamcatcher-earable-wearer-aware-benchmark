@@ -35,4 +35,3 @@ wandb/
 results/run_steps.csv
 results/run_steps_*.csv
 results/runs/
-results/plots/
