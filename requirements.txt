@@ -10,5 +10,4 @@ urllib3==1.26.18
 fsspec==2023.9.2
 transformers
 pandas
-matplotlib
 scikit-learn

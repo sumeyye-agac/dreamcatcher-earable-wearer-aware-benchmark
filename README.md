@@ -182,10 +182,6 @@ bash experiments/run_kd.sh
 ```bash
 bash experiments/run_kd_smoke.sh
 ```
-**Reporting and plots:**
-```bash
-bash experiments/make_plots.sh
-```
 ---
 
 ## Key Takeaways
