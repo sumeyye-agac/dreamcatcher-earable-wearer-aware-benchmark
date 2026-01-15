@@ -44,12 +44,16 @@ def make_model(model_name: str, n_classes: int, args) -> torch.nn.Module:
     if model_name == "crnn":
         return CRNN(n_classes=n_classes, rnn_hidden=args.rnn_hidden, rnn_layers=args.rnn_layers)
     if model_name == "crnn_cbam":
+        use_ca = args.att_mode in ("cbam", "ca")
+        use_sa = args.att_mode in ("cbam", "sa")
         return CRNN_CBAM(
             n_classes=n_classes,
             rnn_hidden=args.rnn_hidden,
             rnn_layers=args.rnn_layers,
             cbam_reduction=args.cbam_reduction,
             cbam_sa_kernel=args.cbam_sa_kernel,
+            use_ca=use_ca,
+            use_sa=use_sa,
         )
     raise ValueError("Unknown model. Choose from: tinycnn, crnn, crnn_cbam")
 
@@ -127,6 +131,13 @@ def main():
     # CBAM
     parser.add_argument("--cbam_reduction", type=int, default=8)
     parser.add_argument("--cbam_sa_kernel", type=int, default=7)
+    parser.add_argument(
+        "--att_mode",
+        type=str,
+        default="cbam",
+        choices=["cbam", "ca", "sa"],
+        help="Attention mode for crnn_cbam: cbam=CA+SA, ca=channel-only, sa=spatial-only.",
+    )
 
     # logging
     parser.add_argument("--run_name", type=str, default="")
@@ -138,7 +149,11 @@ def main():
     args = parser.parse_args()
     t_run0 = time.time()
 
-    run_name = args.run_name if args.run_name else f"{args.model}_seed{args.seed}"
+    if args.run_name:
+        run_name = args.run_name
+    else:
+        suffix = f"_att{args.att_mode}" if args.model == "crnn_cbam" else ""
+        run_name = f"{args.model}{suffix}_seed{args.seed}"
     slog = StepLogger(run_name=run_name, csv_path=args.steps_csv)
     rd = run_dir(run_name)
     # snapshot config for reproducibility (no secrets)
@@ -258,6 +273,7 @@ def main():
         "rnn_layers": args.rnn_layers if args.model != "tinycnn" else "",
         "cbam_reduction": args.cbam_reduction if args.model == "crnn_cbam" else "",
         "cbam_sa_kernel": args.cbam_sa_kernel if args.model == "crnn_cbam" else "",
+        "att_mode": args.att_mode if args.model == "crnn_cbam" else "",
         "alpha": "",
         "tau": "",
         "dataset_mode": args.dataset_mode,

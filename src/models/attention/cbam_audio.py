@@ -40,10 +40,20 @@ class SpatialAttention(nn.Module):
 
 
 class CBAM(nn.Module):
-    def __init__(self, channels: int, reduction: int = 8, sa_kernel: int = 7):
+    def __init__(
+        self,
+        channels: int,
+        reduction: int = 8,
+        sa_kernel: int = 7,
+        *,
+        use_ca: bool = True,
+        use_sa: bool = True,
+    ):
         super().__init__()
-        self.ca = ChannelAttention(channels, reduction=reduction)
-        self.sa = SpatialAttention(kernel_size=sa_kernel)
+        self.use_ca = bool(use_ca)
+        self.use_sa = bool(use_sa)
+        self.ca = ChannelAttention(channels, reduction=reduction) if self.use_ca else nn.Identity()
+        self.sa = SpatialAttention(kernel_size=sa_kernel) if self.use_sa else nn.Identity()
 
     def forward(self, x):
         x = self.ca(x)

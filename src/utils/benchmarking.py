@@ -163,7 +163,7 @@ def append_to_leaderboard(csv_path: str, row: Dict):
     # Define fieldnames based on the row structure
     fieldnames = [
         "run_name", "task", "model", "teacher", "seed", "epochs", "batch_size", "lr",
-        "sr", "n_mels", "rnn_hidden", "rnn_layers", "cbam_reduction", "cbam_sa_kernel",
+        "sr", "n_mels", "rnn_hidden", "rnn_layers", "cbam_reduction", "cbam_sa_kernel", "att_mode",
         "alpha", "tau",
         "dataset_mode", "max_samples", "invalid_audio_policy",
         "best_val_f1", "best_val_acc", "best_val_precision_macro", "best_val_recall_macro", "best_val_balanced_acc",

@@ -163,6 +163,7 @@ def sweep_kd(args: argparse.Namespace) -> None:
     taus = _csv_list(args.tau, cast=float)
     lrs = _csv_list(args.lr, cast=float)
     bss = _csv_list(args.batch_size, cast=int)
+    att_modes = _csv_list(getattr(args, "att_mode", "cbam"), cast=str) or ["cbam"]
 
     if not students:
         raise SystemExit("Provide --students, e.g. --students crnn,crnn_cbam")
@@ -172,7 +173,12 @@ def sweep_kd(args: argparse.Namespace) -> None:
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     run_prefix = args.run_prefix or f"kd_sweep_{ts}"
 
-    combos = list(itertools.product(students, alphas, taus, lrs, bss))
+    # att_mode only applies to crnn_cbam; for other students we keep a single dummy value.
+    combos = []
+    for student in students:
+        modes = att_modes if student == "crnn_cbam" else [""]
+        for alpha, tau, lr, bs, mode in itertools.product(alphas, taus, lrs, bss, modes):
+            combos.append((student, alpha, tau, lr, bs, mode))
     if args.max_runs and args.max_runs > 0:
         combos = combos[: args.max_runs]
 
@@ -183,17 +189,21 @@ def sweep_kd(args: argparse.Namespace) -> None:
         jobs = 1
 
     runs: list[tuple[str, list[str]]] = []
-    for student, alpha, tau, lr, bs in combos:
+    for student, alpha, tau, lr, bs, mode in combos:
         extra = []
         if student in {"crnn", "crnn_cbam"}:
             extra += ["--rnn_hidden", str(args.rnn_hidden), "--rnn_layers", str(args.rnn_layers)]
         if student == "crnn_cbam":
             extra += ["--cbam_reduction", str(args.cbam_reduction), "--cbam_sa_kernel", str(args.cbam_sa_kernel)]
+            if mode:
+                extra += ["--att_mode", str(mode)]
 
+        att_suffix = f"_att{mode}" if (student == "crnn_cbam" and mode) else ""
         run_name = (
             f"{run_prefix}_{student}"
             f"_a{_fmt_runval(alpha)}_t{_fmt_runval(tau)}"
             f"_lr{_fmt_runval(lr)}_bs{bs}"
+            f"{att_suffix}"
             f"_{args.dataset_mode}"
         )
         cmd = [
@@ -379,6 +389,12 @@ def main(argv: list[str] | None = None) -> int:
     p_kd.add_argument("--rnn_layers", type=int, default=1)
     p_kd.add_argument("--cbam_reduction", type=int, default=8)
     p_kd.add_argument("--cbam_sa_kernel", type=int, default=7)
+    p_kd.add_argument(
+        "--att_mode",
+        type=str,
+        default="cbam",
+        help="Comma-list. Only used when student=crnn_cbam: cbam,ca,sa",
+    )
 
     p_sum = sub.add_parser("summarize", help="Summarize runs under results/runs (e.g., after a sweep).")
     p_sum.add_argument("--runs_dir", type=str, default="results/runs")

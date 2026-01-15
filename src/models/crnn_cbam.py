@@ -11,6 +11,9 @@ class CRNN_CBAM(nn.Module):
         rnn_layers: int = 1,
         cbam_reduction: int = 8,
         cbam_sa_kernel: int = 7,
+        *,
+        use_ca: bool = True,
+        use_sa: bool = True,
     ):
         super().__init__()
 
@@ -25,7 +28,7 @@ class CRNN_CBAM(nn.Module):
             nn.MaxPool2d(2),
         )
 
-        self.cbam = CBAM(32, cbam_reduction, cbam_sa_kernel)
+        self.cbam = CBAM(32, cbam_reduction, cbam_sa_kernel, use_ca=use_ca, use_sa=use_sa)
 
         self.block3 = nn.Sequential(
             nn.Conv2d(32, 64, 3, padding=1),

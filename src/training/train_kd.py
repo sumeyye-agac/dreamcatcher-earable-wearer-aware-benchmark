@@ -25,12 +25,16 @@ def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
     if model_name == "crnn":
         return CRNN(n_classes=n_classes, rnn_hidden=args.rnn_hidden, rnn_layers=args.rnn_layers)
     if model_name == "crnn_cbam":
+        use_ca = args.att_mode in ("cbam", "ca")
+        use_sa = args.att_mode in ("cbam", "sa")
         return CRNN_CBAM(
             n_classes=n_classes,
             rnn_hidden=args.rnn_hidden,
             rnn_layers=args.rnn_layers,
             cbam_reduction=args.cbam_reduction,
             cbam_sa_kernel=args.cbam_sa_kernel,
+            use_ca=use_ca,
+            use_sa=use_sa,
         )
     raise ValueError("student must be one of: tinycnn, crnn, crnn_cbam")
 
@@ -186,6 +190,13 @@ def main():
     parser.add_argument("--rnn_layers", type=int, default=1)
     parser.add_argument("--cbam_reduction", type=int, default=8)
     parser.add_argument("--cbam_sa_kernel", type=int, default=7)
+    parser.add_argument(
+        "--att_mode",
+        type=str,
+        default="cbam",
+        choices=["cbam", "ca", "sa"],
+        help="Attention mode for crnn_cbam: cbam=CA+SA, ca=channel-only, sa=spatial-only.",
+    )
 
     parser.add_argument("--run_name", type=str, default="")
     parser.add_argument("--out_csv", type=str, default="results/leaderboard.csv")
@@ -209,7 +220,11 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    run_name = args.run_name if args.run_name else f"kd_{args.student}_a{args.alpha}_t{args.tau}_seed{args.seed}"
+    if args.run_name:
+        run_name = args.run_name
+    else:
+        suffix = f"_att{args.att_mode}" if args.student == "crnn_cbam" else ""
+        run_name = f"kd_{args.student}{suffix}_a{args.alpha}_t{args.tau}_seed{args.seed}"
     rd = run_dir(run_name)
     write_json(rd / "args.json", vars(args) | {"run_name": run_name})
     write_json(rd / "env.json", env_snapshot())
@@ -298,6 +313,7 @@ def main():
         "rnn_layers": args.rnn_layers if args.student != "tinycnn" else "",
         "cbam_reduction": args.cbam_reduction if args.student == "crnn_cbam" else "",
         "cbam_sa_kernel": args.cbam_sa_kernel if args.student == "crnn_cbam" else "",
+        "att_mode": args.att_mode if args.student == "crnn_cbam" else "",
         "alpha": args.alpha,
         "tau": args.tau,
         "dataset_mode": args.dataset_mode,
