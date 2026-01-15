@@ -9,6 +9,19 @@ def count_params(model: torch.nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def estimate_model_size_mb(model: torch.nn.Module) -> float:
+    """
+    Rough on-device footprint estimate: parameters + buffers in MB.
+    (Assumes tensors are stored densely; excludes framework overhead.)
+    """
+    n_bytes = 0
+    for p in model.parameters():
+        n_bytes += p.numel() * p.element_size()
+    for b in model.buffers():
+        n_bytes += b.numel() * b.element_size()
+    return n_bytes / (1024 * 1024)
+
+
 def measure_cpu_latency(model: torch.nn.Module, input_shape: tuple, n_warmup: int = 10, n_runs: int = 100) -> float:
     """
     Measure CPU inference latency in milliseconds.
@@ -47,6 +60,60 @@ def measure_cpu_latency(model: torch.nn.Module, input_shape: tuple, n_warmup: in
     return sum(times) / len(times)
 
 
+def _normalize_leaderboard_csv(csv_path: str, fieldnames: list[str]) -> None:
+    """
+    Ensure `csv_path` exists and has the provided header.
+
+    Supports upgrading:
+    - headerless files (assumes legacy column order is a prefix of fieldnames)
+    - older headered files (pads rows to new schema)
+    """
+    if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
+        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+        with open(csv_path, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(fieldnames)
+        return
+
+    with open(csv_path, "r", newline="") as f:
+        rows = list(csv.reader(f))
+    if not rows:
+        with open(csv_path, "w", newline="") as f:
+            csv.writer(f).writerow(fieldnames)
+        return
+
+    first = rows[0]
+    if first == fieldnames:
+        return
+
+    # Determine if the first row is a header (contains run_name) or data.
+    if "run_name" in first:
+        old_header = first
+        data_rows = rows[1:]
+    else:
+        # Headerless legacy file: assume the legacy schema is a prefix of current schema.
+        old_header = fieldnames[: len(first)]
+        data_rows = rows
+
+    old_set = set(old_header)
+    new_set = set(fieldnames)
+    if not old_set.issubset(new_set):
+        # Unknown schema: don't try to rewrite.
+        return
+
+    # Rewrite with new header and padded rows.
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    with open(csv_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for r in data_rows:
+            d = {k: "" for k in fieldnames}
+            for i, k in enumerate(old_header):
+                if i < len(r):
+                    d[k] = r[i]
+            w.writerow(d)
+
+
 def append_to_leaderboard(csv_path: str, row: Dict):
     """
     Append a row to the leaderboard CSV file.
@@ -61,11 +128,15 @@ def append_to_leaderboard(csv_path: str, row: Dict):
     fieldnames = [
         "run_name", "task", "model", "teacher", "seed", "epochs", "batch_size", "lr",
         "sr", "n_mels", "rnn_hidden", "rnn_layers", "cbam_reduction", "cbam_sa_kernel",
-        "alpha", "tau", "best_val_f1", "test_acc", "test_f1", "params", "cpu_latency_ms"
+        "alpha", "tau",
+        "dataset_mode", "max_samples", "invalid_audio_policy",
+        "best_val_f1", "best_val_acc", "best_val_precision_macro", "best_val_recall_macro", "best_val_balanced_acc",
+        "test_f1", "test_acc", "test_precision_macro", "test_recall_macro", "test_balanced_acc",
+        "params", "model_size_mb", "cpu_latency_ms", "wall_time_s",
     ]
-    
-    with open(csv_path, 'a', newline='') as f:
+
+    _normalize_leaderboard_csv(csv_path, fieldnames)
+
+    with open(csv_path, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if not file_exists:
-            writer.writeheader()
         writer.writerow(row)

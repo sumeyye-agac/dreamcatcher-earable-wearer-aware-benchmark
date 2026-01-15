@@ -8,13 +8,13 @@ from torch.utils.data import DataLoader
 
 from src.data.audio_features import compute_log_mel
 from src.data.dreamcatcher_hf import LABELS, LABEL2ID, load_dreamcatcher_hf_split
-from src.evaluation.metrics import macro_f1
+from src.evaluation.metrics import classification_metrics
 from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
 from src.models.teacher.wav2vec2_teacher import Wav2Vec2Teacher
 from src.utils.reproducibility import set_seed
-from src.utils.benchmarking import count_params, measure_cpu_latency, append_to_leaderboard
+from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
 
 
 def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
@@ -144,9 +144,8 @@ def run_train_epoch(student, teacher, dl, opt, device, alpha, tau):
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
     avg_loss = total_loss / max(1, len(dl.dataset))
-    acc = float(np.mean(np.array(all_true) == np.array(all_pred)))
-    f1 = macro_f1(all_true, all_pred, n_classes=len(LABELS))
-    return avg_loss, acc, f1
+    m = classification_metrics(all_true, all_pred)
+    return avg_loss, m
 
 
 @torch.no_grad()
@@ -163,9 +162,8 @@ def evaluate(student, dl, device):
         all_pred.extend(preds)
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
-    acc = float(np.mean(np.array(all_true) == np.array(all_pred)))
-    f1 = macro_f1(all_true, all_pred, n_classes=len(LABELS))
-    return acc, f1
+    m = classification_metrics(all_true, all_pred)
+    return m
 
 
 def main():
@@ -202,6 +200,8 @@ def main():
     )
 
     args = parser.parse_args()
+    import time
+    t_run0 = time.time()
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
@@ -249,31 +249,35 @@ def main():
     opt = torch.optim.Adam(student.parameters(), lr=args.lr)
 
     best_val_f1 = -1.0
+    best_val_metrics = None
     best_state = None
 
     for epoch in range(1, args.epochs + 1):
-        tr_loss, tr_acc, tr_f1 = run_train_epoch(student, teacher, train_dl, opt, device, args.alpha, args.tau)
-        va_acc, va_f1 = evaluate(student, val_dl, device)
+        tr_loss, tr_m = run_train_epoch(student, teacher, train_dl, opt, device, args.alpha, args.tau)
+        va_m = evaluate(student, val_dl, device)
 
-        if va_f1 > best_val_f1:
-            best_val_f1 = va_f1
+        if va_m.f1_macro > best_val_f1:
+            best_val_f1 = va_m.f1_macro
+            best_val_metrics = va_m
             best_state = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_acc:.4f} train_f1={tr_f1:.4f} | "
-            f"val_acc={va_acc:.4f} val_f1={va_f1:.4f}"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} | "
+            f"val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}"
         )
 
     if best_state is not None:
         student.load_state_dict(best_state)
 
-    te_acc, te_f1 = evaluate(student, test_dl, device)
-    print(f"test_acc={te_acc:.4f} test_f1={te_f1:.4f}")
+    te_m = evaluate(student, test_dl, device)
+    print(f"test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
 
     # Benchmark logging
     param_count = count_params(student)
+    model_size_mb = estimate_model_size_mb(student)
     lat_ms = measure_cpu_latency(student, input_shape=(1, 1, args.n_mels, args.latency_T))
+    wall_time_s = time.time() - t_run0
 
     row = {
         "run_name": run_name,
@@ -292,11 +296,23 @@ def main():
         "cbam_sa_kernel": args.cbam_sa_kernel if args.student == "crnn_cbam" else "",
         "alpha": args.alpha,
         "tau": args.tau,
+        "dataset_mode": args.dataset_mode,
+        "max_samples": args.max_samples if args.max_samples else "",
+        "invalid_audio_policy": "",
         "best_val_f1": round(best_val_f1, 6),
-        "test_acc": round(te_acc, 6),
-        "test_f1": round(te_f1, 6),
+        "best_val_acc": round(best_val_metrics.acc, 6) if best_val_metrics is not None else "",
+        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6) if best_val_metrics is not None else "",
+        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6) if best_val_metrics is not None else "",
+        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6) if best_val_metrics is not None else "",
+        "test_f1": round(te_m.f1_macro, 6),
+        "test_acc": round(te_m.acc, 6),
+        "test_precision_macro": round(te_m.precision_macro, 6),
+        "test_recall_macro": round(te_m.recall_macro, 6),
+        "test_balanced_acc": round(te_m.balanced_acc, 6),
         "params": param_count,
+        "model_size_mb": round(model_size_mb, 4),
         "cpu_latency_ms": round(lat_ms, 4),
+        "wall_time_s": round(wall_time_s, 3),
     }
 
     append_to_leaderboard(args.out_csv, row)

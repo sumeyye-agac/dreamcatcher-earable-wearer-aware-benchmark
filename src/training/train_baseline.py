@@ -7,12 +7,12 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.data.dreamcatcher_hf import DreamCatcherHFAudioDataset, DreamCatcherHFAudioConfig, LABELS
-from src.evaluation.metrics import macro_f1
+from src.evaluation.metrics import classification_metrics
 from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
 from src.utils.reproducibility import set_seed
-from src.utils.benchmarking import count_params, measure_cpu_latency, append_to_leaderboard
+from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
 from src.utils.runlog import StepLogger
 
 
@@ -73,9 +73,8 @@ def run_one_epoch(model, dl, opt, loss_fn, device):
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
     avg_loss = total_loss / max(1, len(dl.dataset))
-    acc = float(np.mean(np.array(all_true) == np.array(all_pred)))
-    f1 = macro_f1(all_true, all_pred, n_classes=len(LABELS))
-    return avg_loss, acc, f1
+    m = classification_metrics(all_true, all_pred)
+    return avg_loss, m
 
 
 @torch.no_grad()
@@ -95,9 +94,8 @@ def evaluate(model, dl, loss_fn, device):
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
     avg_loss = total_loss / max(1, len(dl.dataset))
-    acc = float(np.mean(np.array(all_true) == np.array(all_pred)))
-    f1 = macro_f1(all_true, all_pred, n_classes=len(LABELS))
-    return avg_loss, acc, f1
+    m = classification_metrics(all_true, all_pred)
+    return avg_loss, m
 
 
 def main():
@@ -137,6 +135,7 @@ def main():
     parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
 
     args = parser.parse_args()
+    t_run0 = time.time()
 
     run_name = args.run_name if args.run_name else f"{args.model}_seed{args.seed}"
     slog = StepLogger(run_name=run_name, csv_path=args.steps_csv)
@@ -201,26 +200,28 @@ def main():
     loss_fn = torch.nn.CrossEntropyLoss()
 
     best_val_f1 = -1.0
+    best_val_metrics = None
     best_state = None
 
     for epoch in range(1, args.epochs + 1):
         t_ep = time.time()
-        tr_loss, tr_acc, tr_f1 = run_one_epoch(model, train_dl, opt, loss_fn, device)
-        va_loss, va_acc, va_f1 = evaluate(model, val_dl, loss_fn, device)
+        tr_loss, tr_m = run_one_epoch(model, train_dl, opt, loss_fn, device)
+        va_loss, va_m = evaluate(model, val_dl, loss_fn, device)
 
-        if va_f1 > best_val_f1:
-            best_val_f1 = va_f1
+        if va_m.f1_macro > best_val_f1:
+            best_val_f1 = va_m.f1_macro
+            best_val_metrics = va_m
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_acc:.4f} train_f1={tr_f1:.4f} | "
-            f"val_loss={va_loss:.4f} val_acc={va_acc:.4f} val_f1={va_f1:.4f}"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} | "
+            f"val_loss={va_loss:.4f} val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}"
         )
         slog.log(
             "epoch_done",
             t0=t_ep,
-            detail=f"epoch={epoch} train_loss={tr_loss:.4f} train_acc={tr_acc:.4f} train_f1={tr_f1:.4f} val_loss={va_loss:.4f} val_acc={va_acc:.4f} val_f1={va_f1:.4f}",
+            detail=f"epoch={epoch} train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} val_loss={va_loss:.4f} val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}",
         )
 
     if best_state is not None:
@@ -228,12 +229,14 @@ def main():
 
     t_test = time.time()
     slog.log("test_eval_start")
-    te_loss, te_acc, te_f1 = evaluate(model, test_dl, loss_fn, device)
-    print(f"test_loss={te_loss:.4f} test_acc={te_acc:.4f} test_f1={te_f1:.4f}")
-    slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_acc:.4f} test_f1={te_f1:.4f}")
+    te_loss, te_m = evaluate(model, test_dl, loss_fn, device)
+    print(f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+    slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
 
     param_count = count_params(model)
+    model_size_mb = estimate_model_size_mb(model)
     lat_ms = measure_cpu_latency(model, input_shape=(1, 1, args.n_mels, args.latency_T))
+    wall_time_s = time.time() - t_run0
 
     row = {
         "run_name": run_name,
@@ -252,11 +255,23 @@ def main():
         "cbam_sa_kernel": args.cbam_sa_kernel if args.model == "crnn_cbam" else "",
         "alpha": "",
         "tau": "",
+        "dataset_mode": args.dataset_mode,
+        "max_samples": "",
+        "invalid_audio_policy": args.invalid_audio_policy,
         "best_val_f1": round(best_val_f1, 6),
-        "test_acc": round(te_acc, 6),
-        "test_f1": round(te_f1, 6),
+        "best_val_acc": round(best_val_metrics.acc, 6) if best_val_metrics is not None else "",
+        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6) if best_val_metrics is not None else "",
+        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6) if best_val_metrics is not None else "",
+        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6) if best_val_metrics is not None else "",
+        "test_f1": round(te_m.f1_macro, 6),
+        "test_acc": round(te_m.acc, 6),
+        "test_precision_macro": round(te_m.precision_macro, 6),
+        "test_recall_macro": round(te_m.recall_macro, 6),
+        "test_balanced_acc": round(te_m.balanced_acc, 6),
         "params": param_count,
+        "model_size_mb": round(model_size_mb, 4),
         "cpu_latency_ms": round(lat_ms, 4),
+        "wall_time_s": round(wall_time_s, 3),
     }
 
     append_to_leaderboard(args.out_csv, row)
