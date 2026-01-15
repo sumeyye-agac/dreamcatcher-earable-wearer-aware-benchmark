@@ -22,6 +22,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Build / packaging
+*.egg-info/
+dist/
+build/
+
 # Results and cache
 *.pth
 *.pt
@@ -29,4 +34,5 @@ checkpoints/
 wandb/
 results/run_steps.csv
 results/run_steps_*.csv
+results/runs/
 results/plots/

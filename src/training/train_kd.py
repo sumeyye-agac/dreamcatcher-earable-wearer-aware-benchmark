@@ -15,6 +15,7 @@ from src.models.crnn_cbam import CRNN_CBAM
 from src.models.teacher.wav2vec2_teacher import Wav2Vec2Teacher
 from src.utils.reproducibility import set_seed
 from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
+from src.utils.artifacts import env_snapshot, run_dir, write_json
 
 
 def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
@@ -209,6 +210,9 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     run_name = args.run_name if args.run_name else f"kd_{args.student}_a{args.alpha}_t{args.tau}_seed{args.seed}"
+    rd = run_dir(run_name)
+    write_json(rd / "args.json", vars(args) | {"run_name": run_name})
+    write_json(rd / "env.json", env_snapshot())
 
     train_ds = load_dreamcatcher_hf_split("train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
     val_ds = load_dreamcatcher_hf_split("validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv)
@@ -317,6 +321,18 @@ def main():
 
     append_to_leaderboard(args.out_csv, row)
     print(f"Logged to {args.out_csv}")
+    write_json(
+        rd / "metrics.json",
+        {
+            "run_name": run_name,
+            "best_val": (best_val_metrics.__dict__ if best_val_metrics is not None else None),
+            "test": te_m.__dict__,
+            "params": param_count,
+            "model_size_mb": model_size_mb,
+            "cpu_latency_ms": lat_ms,
+            "wall_time_s": wall_time_s,
+        },
+    )
     print("Done.")
 
 

@@ -14,6 +14,7 @@ from src.models.crnn_cbam import CRNN_CBAM
 from src.utils.reproducibility import set_seed
 from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
 from src.utils.runlog import StepLogger
+from src.utils.artifacts import env_snapshot, run_dir, write_json
 
 
 def collate_fn(batch):
@@ -139,6 +140,10 @@ def main():
 
     run_name = args.run_name if args.run_name else f"{args.model}_seed{args.seed}"
     slog = StepLogger(run_name=run_name, csv_path=args.steps_csv)
+    rd = run_dir(run_name)
+    # snapshot config for reproducibility (no secrets)
+    write_json(rd / "args.json", vars(args) | {"run_name": run_name})
+    write_json(rd / "env.json", env_snapshot())
 
     print(f"\n{'='*60}")
     print(f"Starting Training")
@@ -276,6 +281,19 @@ def main():
 
     append_to_leaderboard(args.out_csv, row)
     print(f"Logged to {args.out_csv}")
+    # write per-run summary (machine-readable)
+    write_json(
+        rd / "metrics.json",
+        {
+            "run_name": run_name,
+            "best_val": (best_val_metrics.__dict__ if best_val_metrics is not None else None),
+            "test": te_m.__dict__,
+            "params": param_count,
+            "model_size_mb": model_size_mb,
+            "cpu_latency_ms": lat_ms,
+            "wall_time_s": wall_time_s,
+        },
+    )
     slog.log("leaderboard_written", detail=f"path={args.out_csv}")
     print("Done.")
     slog.log("run_done")

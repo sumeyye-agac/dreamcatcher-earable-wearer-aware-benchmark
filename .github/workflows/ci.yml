@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Ruff (format check)
+        run: ruff format --check .
+      - name: Ruff (lint)
+        run: ruff check .
+      - name: Import smoke (no HF access required)
+        run: |
+          python -c "import earable_cli; import src.training.train_baseline; import src.training.train_kd"

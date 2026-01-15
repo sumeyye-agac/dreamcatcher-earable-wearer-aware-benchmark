@@ -58,6 +58,7 @@ learning perspective.
 3. **Install dependencies:**
    ```bash
    python3 -m pip install -r requirements.txt
+   python3 -m pip install -e .
    ```
 
 4. **Authenticate with HuggingFace:**
