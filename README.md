@@ -199,6 +199,24 @@ KD hyperparameters (e.g., `alpha`, `tau`, `lr`, `batch_size`) are set **explicit
 to run combinations and log them consistently.
 ---
 
+## Sweeps / Grid Search
+
+You can run a simple grid-search style sweep for KD via the `earable` CLI (runs are logged to the same leaderboard and per-run artifacts):
+
+```bash
+# Example KD sweep (smoke)
+earable sweep kd \
+  --students crnn,crnn_cbam \
+  --alpha 0.3,0.7 \
+  --tau 2,5 \
+  --lr 1e-3 \
+  --batch_size 4 \
+  --dataset_mode smoke \
+  --max_samples 512
+```
+
+Tip: add `--dry_run` to print the commands without running them.
+
 ## Key Takeaways
 
 - Lightweight CRNN models benefit significantly from attention mechanisms in earable audio event recognition.
