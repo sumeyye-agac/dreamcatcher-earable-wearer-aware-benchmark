@@ -38,3 +38,5 @@ results/runs/
 # Leaderboard outputs (generated)
 results/leaderboard.csv
 results/leaderboard.csv.lock
+# Generated summary markdown
+results/top5.md
