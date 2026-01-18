@@ -1,9 +1,5 @@
 # Virtual environment
-dreamcatcher-env/
-venv/
-env/
-.venv/
-.venv-earable/
+earable-env/
 
 # Python
 __pycache__/
