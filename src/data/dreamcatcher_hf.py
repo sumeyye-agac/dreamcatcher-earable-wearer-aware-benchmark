@@ -98,13 +98,20 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
             "validation": base + "imu/validation.tar.gz",
         }
 
-    download_config = DownloadConfig(cache_dir=effective_cache_dir, token=True)
-    if download_config.token is True and not get_token():
-        raise RuntimeError(
-            "HuggingFace token not found. The DreamCatcher dataset is gated.\n"
-            "1) Request access: https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher\n"
-            "2) Login: `hf auth login` (or set env var `HUGGINGFACE_HUB_TOKEN` / `HF_TOKEN`)."
-        )
+    # Allow training with cached dataset even without token
+    # Token is only required for downloading, not for using cached data
+    token_available = get_token()
+    download_config = DownloadConfig(cache_dir=effective_cache_dir, token=token_available or True)
+    if not token_available:
+        # Check if dataset is already cached
+        cache_path = os.path.join(effective_cache_dir, "THU-PI-Sensing___dream_catcher")
+        if not os.path.exists(cache_path):
+            raise RuntimeError(
+                "HuggingFace token not found and dataset not cached locally.\n"
+                "The DreamCatcher dataset is gated.\n"
+                "1) Request access: https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher\n"
+                "2) Login: `hf auth login` (or set env var `HUGGINGFACE_HUB_TOKEN` / `HF_TOKEN`)."
+            )
 
     if logger is not None:
         logger.log("dataset_builder_prepare_start", detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}")
