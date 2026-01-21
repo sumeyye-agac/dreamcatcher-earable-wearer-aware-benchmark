@@ -153,7 +153,7 @@ dreamcatcher-earable-wearer-aware-benchmark/
 ├── src/                        # Source code
 │   ├── data/                  # Dataset loading and preprocessing
 │   ├── models/                # Model implementations
-│   │   ├── teacher/          # Teacher models (ViT, EfficientNet)
+│   │   ├── teacher/          # Teacher models (EfficientNet)
 │   │   ├── tinycnn.py        # Lightweight CNN
 │   │   ├── crnn.py           # CNN + RNN
 │   │   └── crnn_cbam.py      # CRNN + CBAM attention
@@ -220,10 +220,9 @@ The repository does not target speech recognition or ASR.
 - CRNN + CBAM
 
 **Teacher models (training only):**
-- Vision Transformer (ViT): google/vit-base-patch16-224 (~86M params)
 - EfficientNet-B0: google/efficientnet-b0 (~5M params)
 
-Both teachers use pretrained vision models fine-tuned on audio spectrograms.
+Teacher uses pretrained vision model fine-tuned on audio spectrograms for 4-class balanced subset.
 
 *(Teacher models are used during knowledge distillation training only.)*
 

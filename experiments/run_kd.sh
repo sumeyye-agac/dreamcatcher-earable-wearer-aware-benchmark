@@ -2,109 +2,81 @@
 set -e
 
 # Activate virtual environment with all dependencies
-source dream-env/bin/activate
+source earable-env/bin/activate
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-echo "== KD: student=CRNN, teacher=ViT =="
-python3 -m src.training.train_kd \
-  --student crnn \
-  --epochs 30 \
-  --batch_size 8 \
-  --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
-  --alpha 0.7 \
-  --tau 5 \
-  --rnn_hidden 64 \
-  --rnn_layers 1 \
-  --teacher_type vit \
-  --teacher_name google/vit-base-patch16-224 \
-  --run_name crnn_vit_kd \
-  2>&1 | tee logs/crnn_vit_kd.log
+# Define EfficientNet teacher checkpoint
+TEACHER_CHECKPOINT="results/runs/efficientnet_teacher_4class/teacher_checkpoint.pth"
 
-echo "== KD: student=CRNN+CBAM, teacher=ViT =="
-python3 -m src.training.train_kd \
-  --student crnn_cbam \
-  --epochs 30 \
-  --batch_size 8 \
-  --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
-  --alpha 0.7 \
-  --tau 5 \
-  --rnn_hidden 64 \
-  --rnn_layers 1 \
-  --cbam_reduction 8 \
-  --cbam_sa_kernel 7 \
-  --teacher_type vit \
-  --teacher_name google/vit-base-patch16-224 \
-  --run_name crnn_cbam_vit_kd \
-  2>&1 | tee logs/crnn_cbam_vit_kd.log
+if [ ! -f "$TEACHER_CHECKPOINT" ]; then
+  echo "ERROR: Teacher checkpoint not found: $TEACHER_CHECKPOINT"
+  echo "Please train the teacher first using: bash experiments/train_teachers.sh"
+  exit 1
+fi
 
-echo "== KD: student=TinyCNN, teacher=ViT =="
-python3 -m src.training.train_kd \
-  --student tinycnn \
-  --epochs 30 \
-  --batch_size 8 \
-  --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
-  --alpha 0.7 \
-  --tau 5 \
-  --teacher_type vit \
-  --teacher_name google/vit-base-patch16-224 \
-  --run_name tinycnn_vit_kd \
-  2>&1 | tee logs/tinycnn_vit_kd.log
+echo "========================================"
+echo "Knowledge Distillation Experiments (4-class)"
+echo "Using EfficientNet Teacher"
+echo "========================================"
+echo ""
 
 echo "== KD: student=CRNN, teacher=EfficientNet =="
 python3 -m src.training.train_kd \
   --student crnn \
-  --epochs 30 \
+  --epochs 50 \
   --batch_size 8 \
   --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
+  --early_stop_patience 10 \
+  --early_stop_min_delta 0.0001 \
   --alpha 0.7 \
   --tau 5 \
   --rnn_hidden 64 \
   --rnn_layers 1 \
-  --teacher_type efficientnet \
+  --teacher_checkpoint "$TEACHER_CHECKPOINT" \
   --teacher_name google/efficientnet-b0 \
-  --run_name crnn_efficientnet_kd \
+  --run_name crnn_efficientnet_kd_4class \
   2>&1 | tee logs/crnn_efficientnet_kd.log
 
+echo ""
 echo "== KD: student=CRNN+CBAM, teacher=EfficientNet =="
 python3 -m src.training.train_kd \
   --student crnn_cbam \
-  --epochs 30 \
+  --epochs 50 \
   --batch_size 8 \
   --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
+  --early_stop_patience 10 \
+  --early_stop_min_delta 0.0001 \
   --alpha 0.7 \
   --tau 5 \
   --rnn_hidden 64 \
   --rnn_layers 1 \
   --cbam_reduction 8 \
   --cbam_sa_kernel 7 \
-  --teacher_type efficientnet \
+  --att_mode cbam \
+  --teacher_checkpoint "$TEACHER_CHECKPOINT" \
   --teacher_name google/efficientnet-b0 \
-  --run_name crnn_cbam_efficientnet_kd \
+  --run_name crnn_cbam_efficientnet_kd_4class \
   2>&1 | tee logs/crnn_cbam_efficientnet_kd.log
 
+echo ""
 echo "== KD: student=TinyCNN, teacher=EfficientNet =="
 python3 -m src.training.train_kd \
   --student tinycnn \
-  --epochs 30 \
+  --epochs 50 \
   --batch_size 8 \
   --lr 1e-3 \
-  --early_stop_patience 5 \
-  --early_stop_min_delta 0.001 \
+  --early_stop_patience 10 \
+  --early_stop_min_delta 0.0001 \
   --alpha 0.7 \
   --tau 5 \
-  --teacher_type efficientnet \
+  --teacher_checkpoint "$TEACHER_CHECKPOINT" \
   --teacher_name google/efficientnet-b0 \
-  --run_name tinycnn_efficientnet_kd \
+  --run_name tinycnn_efficientnet_kd_4class \
   2>&1 | tee logs/tinycnn_efficientnet_kd.log
+
+echo ""
+echo "========================================"
+echo "All KD experiments complete"
+echo "========================================"

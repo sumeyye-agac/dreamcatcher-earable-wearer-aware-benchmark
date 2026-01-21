@@ -10,7 +10,7 @@ import torch
 from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
 
-from src.data.dreamcatcher_hf import LABELS, DreamCatcherHFAudioConfig, DreamCatcherHFAudioDataset
+from src.data.dreamcatcher_subset import BALANCED4_LABELS as LABELS, DreamCatcherBalanced4Subset
 from src.evaluation.metrics import classification_metrics
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
@@ -122,7 +122,7 @@ def main():
         "--model", type=str, default="tinycnn", choices=["tinycnn", "crnn", "crnn_cbam"]
     )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument(
@@ -221,33 +221,34 @@ def main():
     print("Loading datasets...")
     t_ds = time.time()
     slog.log("load_datasets_start", detail=f"mode={args.dataset_mode}")
-    cfg = DreamCatcherHFAudioConfig(
-        sample_rate=args.sr,
+    train_ds = DreamCatcherBalanced4Subset(
+        mode=args.dataset_mode,
+        split="train",
+        sr=args.sr,
         n_mels=args.n_mels,
         invalid_audio_policy=args.invalid_audio_policy,
-    )
-    train_ds = DreamCatcherHFAudioDataset(
-        split="train",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
         max_samples=args.max_samples if args.max_samples else 0,
     )
-    val_ds = DreamCatcherHFAudioDataset(
+    val_ds = DreamCatcherBalanced4Subset(
+        mode=args.dataset_mode,
         split="validation",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
+        sr=args.sr,
+        n_mels=args.n_mels,
+        invalid_audio_policy=args.invalid_audio_policy,
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
         max_samples=args.max_samples if args.max_samples else 0,
     )
-    test_ds = DreamCatcherHFAudioDataset(
+    test_ds = DreamCatcherBalanced4Subset(
+        mode=args.dataset_mode,
         split="test",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
+        sr=args.sr,
+        n_mels=args.n_mels,
+        invalid_audio_policy=args.invalid_audio_policy,
         run_name=run_name,
         steps_csv=args.steps_csv,
         cache_dir=(args.cache_dir or None),
@@ -353,7 +354,7 @@ def main():
         "run_started_at_utc": run_started_at_utc,
         "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
-        "task": "audio_event_label",
+        "task": "balanced4_audio_event",
         "model": args.model,
         "teacher": "",
         "seed": args.seed,

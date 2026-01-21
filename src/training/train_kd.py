@@ -11,11 +11,16 @@ from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
 
 from src.data.audio_features import compute_log_mel
-from src.data.dreamcatcher_hf import LABEL2ID, LABELS, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_hf import LABEL2ID as LABEL2ID_9CLASS, LABELS as LABELS_9CLASS, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_subset import (
+    BALANCED4_LABEL_MAP,
+    BALANCED4_LABELS as LABELS,
+    BALANCED4_ORIGINAL_INDICES,
+)
 from src.evaluation.metrics import classification_metrics
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
-from src.models.teacher import EfficientNetTeacher, ViTTeacher
+from src.models.teacher import EfficientNetTeacher
 from src.models.tinycnn import TinyCNN
 from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import (
@@ -96,10 +101,14 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
         if isinstance(label_val, int | np.integer):
-            ys.append(int(label_val))
+            label_9class = int(label_val)
         else:
             label_str = str(label_val)
-            ys.append(LABEL2ID[label_str])
+            label_9class = LABEL2ID_9CLASS[label_str]
+
+        # Remap 9-class label to 4-class
+        label_4class = BALANCED4_LABEL_MAP[label_9class]
+        ys.append(label_4class)
 
     # pad mel for student [B, 1, n_mels, T]
     max_t = max(x.shape[1] for x in xs_mel)
@@ -141,7 +150,9 @@ def run_train_epoch(student, teacher, dl, opt, device, alpha, tau):
         xb_mel_teacher = xb_mel_teacher.to(device)
 
         with torch.no_grad():
-            t_logits = teacher(xb_mel_teacher)
+            t_logits_full = teacher(xb_mel_teacher)  # [B, 9]
+            # Filter to 4-class logits: quiet, breathe, non_wearer, snore
+            t_logits = t_logits_full[:, BALANCED4_ORIGINAL_INDICES]  # [B, 4]
 
         s_logits = student(xb_mel)
         loss = kd_loss(s_logits, t_logits, yb, alpha=alpha, tau=tau)
@@ -186,7 +197,7 @@ def main():
         "--student", type=str, default="crnn", choices=["tinycnn", "crnn", "crnn_cbam"]
     )
 
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
@@ -330,30 +341,21 @@ def main():
 
     student = make_student(args.student, n_classes=len(LABELS), args=args).to(device)
 
-    # Initialize teacher based on type
+    # Initialize EfficientNet teacher (only option supported for 4-class)
+    # Note: Teacher is trained on 9-class dataset, we'll filter logits to 4-class
     if args.teacher_checkpoint:
         # Load from trained checkpoint
-        print(f"Loading teacher from checkpoint: {args.teacher_checkpoint}")
-        if args.teacher_type == "vit":
-            teacher = ViTTeacher.load_from_checkpoint(args.teacher_checkpoint, device=str(device))
-        elif args.teacher_type == "efficientnet":
-            teacher = EfficientNetTeacher.load_from_checkpoint(
-                args.teacher_checkpoint, device=str(device)
-            )
-        else:
-            raise ValueError(f"Unknown teacher type: {args.teacher_type}")
+        print(f"Loading EfficientNet teacher from checkpoint: {args.teacher_checkpoint}")
+        teacher = EfficientNetTeacher.load_from_checkpoint(
+            args.teacher_checkpoint, device=str(device)
+        )
     else:
         # Initialize from pre-trained (not recommended - teacher needs training first)
         print(
             f"⚠️  WARNING: Initializing teacher from pre-trained {args.teacher_name} without fine-tuning!"
         )
         print("    For best results, train the teacher first using train_teacher.py")
-        if args.teacher_type == "vit":
-            teacher = ViTTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
-        elif args.teacher_type == "efficientnet":
-            teacher = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
-        else:
-            raise ValueError(f"Unknown teacher type: {args.teacher_type}")
+        teacher = EfficientNetTeacher(n_classes=9, model_name=args.teacher_name)  # 9-class teacher
         teacher.to(device)
 
     teacher.eval()
@@ -424,7 +426,7 @@ def main():
         "run_started_at_utc": run_started_at_utc,
         "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
-        "task": "audio_event_label",
+        "task": "balanced4_audio_event",
         "model": args.student,
         "teacher": args.teacher_name,
         "seed": args.seed,

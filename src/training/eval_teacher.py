@@ -1,5 +1,5 @@
 """
-Evaluate teacher models (ViT/EfficientNet) on DreamCatcher test set.
+Evaluate EfficientNet teacher model on DreamCatcher 4-class test set.
 This provides a baseline to compare student models and KD effectiveness.
 """
 
@@ -16,9 +16,10 @@ from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data.dreamcatcher_hf import LABELS, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_hf import LABEL2ID, LABELS as LABELS_9CLASS, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_subset import BALANCED4_LABEL_MAP, BALANCED4_LABELS as LABELS
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher import EfficientNetTeacher, ViTTeacher
+from src.models.teacher import EfficientNetTeacher
 from src.utils.artifacts import run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 
@@ -81,16 +82,18 @@ def collate_fn(batch, sr: int = 16000, n_mels: int = 64):
             )
 
         if isinstance(label_val, int | np.integer):
-            labels.append(int(label_val))
+            label_9class = int(label_val)
         else:
-            from src.data.dreamcatcher_hf import LABEL2ID
-
             label_str = str(label_val)
             if label_str not in LABEL2ID:
                 raise ValueError(
                     f"Unknown label: {label_str}. Known labels: {list(LABEL2ID.keys())}"
                 )
-            labels.append(LABEL2ID[label_str])
+            label_9class = LABEL2ID[label_str]
+
+        # Remap 9-class label to 4-class for balanced subset
+        label_4class = BALANCED4_LABEL_MAP[label_9class]
+        labels.append(label_4class)
 
     # Pad spectrograms to max length in batch [B, n_mels, T]
     max_t = max(mel.shape[1] for mel in xs_mel)
@@ -210,14 +213,9 @@ def main():
 
     print(f"Test set size: {len(test_ds)}")
 
-    # Load teacher model
-    print(f"\nLoading teacher model: {args.teacher_type} - {args.teacher_name}")
-    if args.teacher_type == "vit":
-        teacher = ViTTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
-    elif args.teacher_type == "efficientnet":
-        teacher = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
-    else:
-        raise ValueError(f"Unknown teacher type: {args.teacher_type}")
+    # Load EfficientNet teacher model for 4-class classification
+    print(f"\nLoading EfficientNet teacher model: {args.teacher_name}")
+    teacher = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
 
     # Evaluate
     te_m, cm = evaluate_teacher(

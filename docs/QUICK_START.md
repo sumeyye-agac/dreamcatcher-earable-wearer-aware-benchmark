@@ -28,18 +28,17 @@ huggingface-cli login
 # Enter your token when prompted
 ```
 
-## Step 2: Train Teachers (2-3 hours)
+## Step 2: Train Teacher (2-3 hours)
 
-Teachers must be trained before KD experiments:
+Teacher must be trained before KD experiments:
 
 ```bash
-# Train both ViT and EfficientNet teachers
+# Train EfficientNet teacher for 4-class balanced subset
 bash experiments/train_teachers.sh
 ```
 
-This creates checkpoints:
-- `results/runs/vit_teacher_finetuned/teacher_checkpoint.pth`
-- `results/runs/efficientnet_teacher_finetuned/teacher_checkpoint.pth`
+This creates checkpoint:
+- `results/runs/efficientnet_teacher_4class/teacher_checkpoint.pth`
 
 ## Step 3: Run Experiments
 
@@ -53,13 +52,9 @@ bash experiments/run_audio_benchmark.sh
 
 ### Option B: Knowledge Distillation
 
-Train students with KD from trained teachers:
+Train students with KD from trained teacher:
 
 ```bash
-# Edit experiments/run_kd.sh to add checkpoint paths:
-# --teacher_checkpoint results/runs/vit_teacher_finetuned/teacher_checkpoint.pth
-
-# Then run
 bash experiments/run_kd.sh
 ```
 
@@ -68,11 +63,11 @@ Or run individual experiments:
 ```bash
 python3 -m src.training.train_kd \
   --student crnn \
-  --teacher_type vit \
-  --teacher_checkpoint results/runs/vit_teacher_finetuned/teacher_checkpoint.pth \
+  --teacher_checkpoint results/runs/efficientnet_teacher_4class/teacher_checkpoint.pth \
+  --teacher_name google/efficientnet-b0 \
   --alpha 0.7 \
   --tau 5 \
-  --epochs 30
+  --epochs 50
 ```
 
 ## Quick Test (Smoke Mode)

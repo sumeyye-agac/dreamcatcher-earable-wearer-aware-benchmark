@@ -1,5 +1,5 @@
 """
-Train teacher models (ViT/EfficientNet) on DreamCatcher dataset.
+Train EfficientNet teacher model on DreamCatcher 4-class balanced subset.
 Fine-tunes pre-trained vision models on audio spectrograms.
 """
 
@@ -19,8 +19,9 @@ from tqdm import tqdm
 
 from src.data.audio_features import compute_log_mel
 from src.data.dreamcatcher_hf import LABEL2ID, LABELS, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_subset import BALANCED4_LABELS, BALANCED4_LABEL_MAP
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher import EfficientNetTeacher, ViTTeacher
+from src.models.teacher import EfficientNetTeacher
 from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 from src.utils.reproducibility import set_seed
@@ -74,10 +75,14 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
         if isinstance(label_val, int | np.integer):
-            ys.append(int(label_val))
+            label_9class = int(label_val)
         else:
             label_str = str(label_val)
-            ys.append(LABEL2ID[label_str])
+            label_9class = LABEL2ID[label_str]
+
+        # Remap 9-class label to 4-class for balanced subset
+        label_4class = BALANCED4_LABEL_MAP[label_9class]
+        ys.append(label_4class)
 
     # Pad spectrograms [B, n_mels, T]
     max_t = max(x.shape[1] for x in xs_mel)
@@ -154,7 +159,7 @@ def main():
     parser.add_argument(
         "--teacher_name", type=str, help="HuggingFace model name (optional override)"
     )
-    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--n_mels", type=int, default=64, help="Number of mel bins")
@@ -273,12 +278,9 @@ def main():
         num_workers=0,
     )
 
-    # Initialize model
-    print(f"\nInitializing {args.teacher_type} teacher...")
-    if args.teacher_type == "vit":
-        model = ViTTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
-    else:
-        model = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
+    # Initialize EfficientNet model for 4-class classification
+    print(f"\nInitializing EfficientNet teacher for 4-class classification...")
+    model = EfficientNetTeacher(n_classes=len(BALANCED4_LABELS), model_name=args.teacher_name)
 
     # Optionally unfreeze encoder
     if not args.freeze_encoder:
@@ -337,7 +339,7 @@ def main():
             "model_state_dict": best_state,
             "model_type": args.teacher_type,
             "model_name": args.teacher_name,
-            "n_classes": len(LABELS),
+            "n_classes": len(BALANCED4_LABELS),
             "best_val_f1": best_val_f1,
             "epoch": best_epoch,
         },
@@ -351,7 +353,7 @@ def main():
     print(f"{'=' * 60}")
 
     te_loss, te_m, te_true, te_pred = evaluate(model, test_dl, device, criterion)
-    cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
+    cm = confusion_matrix(te_true, te_pred, labels=list(range(len(BALANCED4_LABELS))))
 
     print(f"\nTest Loss: {te_loss:.4f}")
     print(f"Test Acc:  {te_m.acc:.4f}")
@@ -364,9 +366,9 @@ def main():
     cm_path = rd / "test_confusion_matrix.csv"
     with open(cm_path, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["true\\pred", *LABELS])
+        w.writerow(["true\\pred", *BALANCED4_LABELS])
         for i, row_vals in enumerate(cm.tolist()):
-            w.writerow([LABELS[i], *row_vals])
+            w.writerow([BALANCED4_LABELS[i], *row_vals])
     print(f"✓ Saved confusion matrix: {cm_path}")
 
     # Benchmark metrics
@@ -380,7 +382,7 @@ def main():
         "run_started_at_utc": run_started_at_utc,
         "run_finished_at_utc": run_finished_at_utc,
         "run_name": args.run_name,
-        "task": "audio_event_label",
+        "task": "balanced4_audio_event",
         "model": f"{args.teacher_type}_teacher",
         "teacher": args.teacher_name,
         "seed": args.seed,
