@@ -18,8 +18,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.data.audio_features import compute_log_mel
-from src.data.dreamcatcher_hf import LABEL2ID, LABELS, load_dreamcatcher_hf_split
-from src.data.dreamcatcher_subset import BALANCED4_LABELS, BALANCED4_LABEL_MAP
+from src.data.dreamcatcher_hf import DreamCatcherHFAudioConfig
+from src.data.dreamcatcher_subset import BALANCED4_LABELS, DreamCatcherBalanced4Subset
 from src.evaluation.metrics import classification_metrics
 from src.models.teacher import EfficientNetTeacher
 from src.utils.artifacts import env_snapshot, run_dir, write_json
@@ -74,15 +74,12 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
         if label_val is None:
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
+        # DreamCatcherBalanced4Subset already returns remapped 4-class labels
         if isinstance(label_val, int | np.integer):
-            label_9class = int(label_val)
+            ys.append(int(label_val))
         else:
-            label_str = str(label_val)
-            label_9class = LABEL2ID[label_str]
-
-        # Remap 9-class label to 4-class for balanced subset
-        label_4class = BALANCED4_LABEL_MAP[label_9class]
-        ys.append(label_4class)
+            # Should not happen with Balanced4Subset, but handle gracefully
+            ys.append(int(label_val))
 
     # Pad spectrograms [B, n_mels, T]
     max_t = max(x.shape[1] for x in xs_mel)
@@ -228,31 +225,37 @@ def main():
     print(f"Freeze encoder: {args.freeze_encoder}")
     print(f"{'=' * 60}\n")
 
-    # Load datasets
+    # Load balanced 4-class datasets
     print("Loading datasets...")
-    train_ds = load_dreamcatcher_hf_split(
-        "train",
+    cfg = DreamCatcherHFAudioConfig(
+        sample_rate=args.sr,
+        n_mels=args.n_mels,
+        invalid_audio_policy="pad",
+    )
+    train_ds = DreamCatcherBalanced4Subset(
+        split="train",
+        cfg=cfg,
         dataset_mode=args.dataset_mode,
         run_name=args.run_name,
         steps_csv=args.steps_csv,
+        max_samples=args.max_samples if args.max_samples else 0,
     )
-    val_ds = load_dreamcatcher_hf_split(
-        "validation",
+    val_ds = DreamCatcherBalanced4Subset(
+        split="validation",
+        cfg=cfg,
         dataset_mode=args.dataset_mode,
         run_name=args.run_name,
         steps_csv=args.steps_csv,
+        max_samples=args.max_samples if args.max_samples else 0,
     )
-    test_ds = load_dreamcatcher_hf_split(
-        "test",
+    test_ds = DreamCatcherBalanced4Subset(
+        split="test",
+        cfg=cfg,
         dataset_mode=args.dataset_mode,
         run_name=args.run_name,
         steps_csv=args.steps_csv,
+        max_samples=args.max_samples if args.max_samples else 0,
     )
-
-    if args.max_samples and args.max_samples > 0:
-        train_ds = train_ds.select(range(min(args.max_samples, len(train_ds))))
-        val_ds = val_ds.select(range(min(args.max_samples, len(val_ds))))
-        test_ds = test_ds.select(range(min(args.max_samples, len(test_ds))))
 
     print(f"Train: {len(train_ds)}, Val: {len(val_ds)}, Test: {len(test_ds)}")
 

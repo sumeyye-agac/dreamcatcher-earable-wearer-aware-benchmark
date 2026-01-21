@@ -2,7 +2,7 @@
 set -e
 
 # Activate virtual environment
-source earable-env/bin/activate
+source dream-env/bin/activate
 
 # Create logs directory
 mkdir -p logs

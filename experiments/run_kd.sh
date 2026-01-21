@@ -2,7 +2,7 @@
 set -e
 
 # Activate virtual environment with all dependencies
-source earable-env/bin/activate
+source dream-env/bin/activate
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
