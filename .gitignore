@@ -1,5 +1,5 @@
 # Virtual environment
-earable-env/
+dream-env/
 
 # Python
 __pycache__/
@@ -36,3 +36,7 @@ results/leaderboard.csv
 results/leaderboard.csv.lock
 # Generated summary markdown
 results/top5.md
+
+# Logs
+logs/
+*.log

@@ -1,12 +1,12 @@
 # DreamCatcher Earable Wearer-Aware Benchmark
 
-[![Status](https://img.shields.io/badge/status-work%20in%20progress-yellow.svg)](#)
+[![Status](https://img.shields.io/badge/status-under%20development-yellow.svg)](#)
 
-**Note:** This repository is actively under development. Expect breaking changes while we iterate.
+**Note:** This repository is under active development. Teacher models and KD pipeline have been implemented but performance benchmarks are still being validated.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/)
-[![Wav2Vec2](https://img.shields.io/badge/Wav2Vec2-Facebook-blue.svg)](https://huggingface.co/facebook/wav2vec2-base)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-yellow.svg)](https://huggingface.co/)
 
 Resource-efficient wearer-aware event recognition on earables (DreamCatcher dataset).
 
@@ -132,6 +132,47 @@ python3 -m src.training.train_kd --cache_dir "/path/with/space/hf_datasets_cache
 
 ---
 
+## Repository Structure
+
+```
+dreamcatcher-earable-wearer-aware-benchmark/
+├── README.md                    # Main documentation
+├── docs/                        # Additional documentation
+│   ├── TEACHER_TRAINING.md     # Teacher training guide
+│   └── WORKFLOW.md             # Complete experiment workflow
+├── scripts/                     # Utility scripts
+│   ├── earable_cli.py          # CLI tool for dataset operations
+│   ├── monitor_experiments.sh  # Monitor running experiments
+│   ├── watch_experiments.sh    # Watch experiment progress
+│   └── plot_distribution.py    # Dataset visualization
+├── experiments/                 # Shell scripts for experiments
+│   ├── train_teachers.sh       # Train teacher models
+│   ├── run_kd.sh              # Knowledge distillation
+│   ├── run_audio_benchmark.sh # Baseline training
+│   └── ...                    # Other experiment scripts
+├── src/                        # Source code
+│   ├── data/                  # Dataset loading and preprocessing
+│   ├── models/                # Model implementations
+│   │   ├── teacher/          # Teacher models (ViT, EfficientNet)
+│   │   ├── tinycnn.py        # Lightweight CNN
+│   │   ├── crnn.py           # CNN + RNN
+│   │   └── crnn_cbam.py      # CRNN + CBAM attention
+│   ├── training/              # Training scripts
+│   │   ├── train_teacher.py  # Train teachers
+│   │   ├── train_kd.py       # KD training
+│   │   └── train_baseline.py # Baseline training
+│   ├── evaluation/            # Metrics and evaluation
+│   └── utils/                 # Utilities
+├── configs/                    # Configuration files
+├── results/                    # Experiment outputs (gitignored)
+│   ├── runs/                 # Individual run outputs
+│   ├── leaderboard.csv       # All results
+│   └── run_steps.csv         # Processing steps log
+└── logs/                      # Training logs (gitignored)
+```
+
+---
+
 ## Dataset
 
 DreamCatcher dataset (introduced in NeurIPS 2024, Datasets & Benchmarks Track)
@@ -250,6 +291,38 @@ Runs write per-run artifacts to `results/runs/<run_name>/`. You can summarize a 
 ```bash
 # Example: summarize the most recent sweep (replace prefix)
 earable summarize --prefix kd_sweep_ --metric f1_macro --topk 10
+```
+
+## Dataset Analysis & Visualization
+
+### Class Distribution
+
+Visualize the class distribution in the DreamCatcher dataset (all splits combined):
+
+```bash
+python scripts/plot_distribution.py
+```
+
+Generates two high-quality visualizations saved to `results/visualizations/`:
+- **class_distribution_bar_total.png** - Bar chart with sample counts and percentages
+- **class_distribution_pie_total.png** - Pie chart with percentage breakdown
+
+**Example output (total: 447,648 samples):**
+```
+  quiet               :  210,546 samples ( 47.03%)
+  breathe             :  141,885 samples ( 31.70%)
+  non_wearer          :   42,013 samples (  9.39%)
+  snore               :   38,611 samples (  8.63%)
+  bruxism             :    8,023 samples (  1.79%)
+  movements           :    3,569 samples (  0.80%)
+  swallow             :    2,179 samples (  0.49%)
+  somniloquy          :      714 samples (  0.16%)
+  cough               :       98 samples (  0.02%)
+```
+
+**Custom confusion matrix:**
+```bash
+python scripts/plot_distribution.py --confusion-matrix <path>
 ```
 
 ## Key Takeaways

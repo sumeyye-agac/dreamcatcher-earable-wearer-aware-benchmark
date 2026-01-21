@@ -9,13 +9,15 @@ description = "Resource-efficient wearer-aware event recognition on earables (Dr
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
+authors = [
+    { name = "Sumeyye Agac" }
+]
 
 [project.scripts]
-earable = "earable_cli:main"
+earable = "scripts.earable_cli:main"
 
 [tool.setuptools]
 packages = { find = { where = ["."] } }
-py-modules = ["earable_cli"]
 
 [tool.ruff]
 target-version = "py312"
