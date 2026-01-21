@@ -24,4 +24,4 @@ jobs:
         run: ruff check .
       - name: Import smoke (no HF access required)
         run: |
-          python -c "import earable_cli; import src.training.train_baseline; import src.training.train_kd"
+          python -c "import scripts.earable_cli; import src.training.train_baseline; import src.training.train_kd"
