@@ -27,70 +27,23 @@ from src.utils.benchmarking import append_to_leaderboard, count_params, estimate
 from src.utils.reproducibility import set_seed
 
 
-def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
+def collate_fn(batch):
     """
-    Collate function for teacher training.
+    Collate function for teacher training with Balanced4Subset.
+    Batch is a list of (spectrogram, label) tuples from DreamCatcherBalanced4Subset.
     Teacher input: log-mel spectrograms [B, n_mels, T]
     """
-    xs_mel = []
-    ys = []
+    xs, ys = zip(*batch)
+    max_t = max(x.shape[1] for x in xs)
+    n_mels = xs[0].shape[0]
 
-    for row in batch:
-        if "audio" in row:
-            audio = row["audio"]
-        elif "audio_data" in row:
-            audio = row["audio_data"]
-        else:
-            raise KeyError("Expected 'audio' (or legacy 'audio_data') in dataset row.")
-        y = np.asarray(audio["array"], dtype=np.float32)
-        a_sr = int(audio["sampling_rate"])
+    # Pad spectrograms to max time [B, n_mels, T]
+    x_pad = np.zeros((len(xs), n_mels, max_t), dtype=np.float32)
+    for i, x in enumerate(xs):
+        t = x.shape[1]
+        x_pad[i, :, :t] = x
 
-        if y.ndim == 2:
-            if y.shape[0] == 0 or y.shape[1] == 0:
-                y = np.zeros((0,), dtype=np.float32)
-            else:
-                y = y.mean(axis=1)
-
-        # Sanitize NaN/inf
-        if y.size > 0:
-            y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
-
-        if a_sr != sr:
-            import librosa
-
-            y = librosa.resample(y, orig_sr=a_sr, target_sr=sr)
-
-        # Ensure minimum length for spectrogram generation
-        if y.shape[0] < 1024:
-            y = np.pad(y, (0, 1024 - y.shape[0]), mode="constant")
-
-        xs_mel.append(compute_log_mel(y=y, sr=sr, n_mels=n_mels))
-
-        label_val = row.get("label", None)
-        if label_val is None:
-            label_val = row.get("event_label", None)
-        if label_val is None:
-            label_val = row.get("class", None)
-        if label_val is None:
-            raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
-
-        # DreamCatcherBalanced4Subset already returns remapped 4-class labels
-        if isinstance(label_val, int | np.integer):
-            ys.append(int(label_val))
-        else:
-            # Should not happen with Balanced4Subset, but handle gracefully
-            ys.append(int(label_val))
-
-    # Pad spectrograms [B, n_mels, T]
-    max_t = max(x.shape[1] for x in xs_mel)
-    x_pad = np.zeros((len(xs_mel), n_mels, max_t), dtype=np.float32)
-    for i, x in enumerate(xs_mel):
-        x_pad[i, :, : x.shape[1]] = x
-
-    return (
-        torch.from_numpy(x_pad),
-        torch.tensor(ys, dtype=torch.long),
-    )
+    return torch.from_numpy(x_pad), torch.tensor(ys, dtype=torch.long)
 
 
 def train_epoch(model, dl, opt, device, criterion):
@@ -263,21 +216,21 @@ def main():
         train_ds,
         batch_size=args.batch_size,
         shuffle=True,
-        collate_fn=lambda b: collate_fn(b, n_mels=args.n_mels, sr=args.sr),
+        collate_fn=collate_fn,
         num_workers=0,
     )
     val_dl = DataLoader(
         val_ds,
         batch_size=args.batch_size,
         shuffle=False,
-        collate_fn=lambda b: collate_fn(b, n_mels=args.n_mels, sr=args.sr),
+        collate_fn=collate_fn,
         num_workers=0,
     )
     test_dl = DataLoader(
         test_ds,
         batch_size=args.batch_size,
         shuffle=False,
-        collate_fn=lambda b: collate_fn(b, n_mels=args.n_mels, sr=args.sr),
+        collate_fn=collate_fn,
         num_workers=0,
     )
 
