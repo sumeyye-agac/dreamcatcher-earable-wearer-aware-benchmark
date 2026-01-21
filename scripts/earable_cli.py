@@ -145,7 +145,7 @@ def suite_kd_smoke(args: argparse.Namespace) -> None:
                 "--tau",
                 "5",
                 "--teacher_name",
-                "facebook/wav2vec2-base",
+                "google/efficientnet-b0",
                 "--run_name",
                 run_name,
                 *extra,
@@ -394,7 +394,7 @@ def main(argv: list[str] | None = None) -> int:
     p_kd.add_argument("--seed", type=int, default=42)
     p_kd.add_argument("--dataset_mode", type=str, default="smoke", choices=["full", "smoke"])
     p_kd.add_argument("--max_samples", type=int, default=512, help="Per-split cap when dataset_mode=smoke")
-    p_kd.add_argument("--teacher_name", type=str, default="facebook/wav2vec2-base")
+    p_kd.add_argument("--teacher_name", type=str, default="google/efficientnet-b0")
     p_kd.add_argument("--run_prefix", type=str, default="", help="Prefix for run_name; defaults to timestamped prefix")
     p_kd.add_argument("--max_runs", type=int, default=0, help="Optional cap on number of runs (0 = no cap)")
     p_kd.add_argument("--dry_run", action="store_true", help="Print commands without executing")

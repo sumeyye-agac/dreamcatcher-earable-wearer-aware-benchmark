@@ -219,10 +219,13 @@ The repository does not target speech recognition or ASR.
 - CRNN
 - CRNN + CBAM
 
-**Teacher model (training only):**
-- Pretrained Wav2Vec2 encoder (frozen) with a lightweight classification head
+**Teacher models (training only):**
+- Vision Transformer (ViT): google/vit-base-patch16-224 (~86M params)
+- EfficientNet-B0: google/efficientnet-b0 (~5M params)
 
-*(The Wav2Vec2 model is used as a frozen teacher during training only.)*
+Both teachers use pretrained vision models fine-tuned on audio spectrograms.
+
+*(Teacher models are used during knowledge distillation training only.)*
 
 ---
 
