@@ -15,7 +15,7 @@ from src.evaluation.metrics import classification_metrics
 from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
-from src.models.teacher.wav2vec2_teacher import Wav2Vec2Teacher
+from src.models.teacher import ViTTeacher, EfficientNetTeacher
 from src.utils.reproducibility import set_seed
 from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
 from src.utils.artifacts import env_snapshot, run_dir, write_json
@@ -45,11 +45,10 @@ def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
 def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
     """
     Student input: log-mel [B, 1, n_mels, Tpad]
-    Teacher input: raw audio [B, Tpad_raw]
+    Teacher input: log-mel [B, n_mels, Tpad] (for ViT/EfficientNet)
     """
     xs_mel = []
     ys = []
-    raws = []
 
     for row in batch:
         if "audio" in row:
@@ -80,7 +79,6 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             y = np.pad(y, (0, 1024 - y.shape[0]), mode="constant")
 
         xs_mel.append(compute_log_mel(y=y, sr=sr, n_mels=n_mels))
-        raws.append(y)
 
         label_val = row.get("label", None)
         if label_val is None:
@@ -96,22 +94,21 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             label_str = str(label_val)
             ys.append(LABEL2ID[label_str])
 
-    # pad mel
+    # pad mel for student [B, 1, n_mels, T]
     max_t = max(x.shape[1] for x in xs_mel)
-    x_pad = np.zeros((len(xs_mel), 1, n_mels, max_t), dtype=np.float32)
+    x_pad_student = np.zeros((len(xs_mel), 1, n_mels, max_t), dtype=np.float32)
     for i, x in enumerate(xs_mel):
-        x_pad[i, 0, :, : x.shape[1]] = x
+        x_pad_student[i, 0, :, : x.shape[1]] = x
 
-    # pad raw
-    max_raw = max(r.shape[0] for r in raws)
-    raw_pad = np.zeros((len(raws), max_raw), dtype=np.float32)
-    for i, r in enumerate(raws):
-        raw_pad[i, : r.shape[0]] = r
+    # pad mel for teacher [B, n_mels, T] (no channel dimension)
+    x_pad_teacher = np.zeros((len(xs_mel), n_mels, max_t), dtype=np.float32)
+    for i, x in enumerate(xs_mel):
+        x_pad_teacher[i, :, : x.shape[1]] = x
 
     return (
-        torch.from_numpy(x_pad),
+        torch.from_numpy(x_pad_student),
         torch.tensor(ys, dtype=torch.long),
-        torch.from_numpy(raw_pad),
+        torch.from_numpy(x_pad_teacher),
     )
 
 
@@ -131,13 +128,13 @@ def run_train_epoch(student, teacher, dl, opt, device, alpha, tau):
     all_true, all_pred = [], []
     total_loss = 0.0
 
-    for xb_mel, yb, xb_raw in dl:
+    for xb_mel, yb, xb_mel_teacher in dl:
         xb_mel = xb_mel.to(device)
         yb = yb.to(device)
-        xb_raw = xb_raw.to(device)
+        xb_mel_teacher = xb_mel_teacher.to(device)
 
         with torch.no_grad():
-            t_logits = teacher(xb_raw)
+            t_logits = teacher(xb_mel_teacher)
 
         s_logits = student(xb_mel)
         loss = kd_loss(s_logits, t_logits, yb, alpha=alpha, tau=tau)
@@ -161,7 +158,7 @@ def evaluate(student, dl, device, *, return_preds: bool = False):
     student.eval()
     all_true, all_pred = [], []
 
-    for xb_mel, yb, xb_raw in dl:
+    for xb_mel, yb, xb_mel_teacher in dl:
         xb_mel = xb_mel.to(device)
         yb = yb.to(device)
 
@@ -224,7 +221,15 @@ def main():
     parser.add_argument("--run_name", type=str, default="")
     parser.add_argument("--out_csv", type=str, default="results/leaderboard.csv")
     parser.add_argument("--latency_T", type=int, default=400)
-    parser.add_argument("--teacher_name", type=str, default="facebook/wav2vec2-base")
+    parser.add_argument(
+        "--teacher_type",
+        type=str,
+        default="vit",
+        choices=["vit", "efficientnet"],
+        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)"
+    )
+    parser.add_argument("--teacher_name", type=str, default="google/vit-base-patch16-224")
+    parser.add_argument("--teacher_checkpoint", type=str, default="", help="Path to trained teacher checkpoint (optional)")
     parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
     parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv")
     parser.add_argument(
@@ -297,7 +302,29 @@ def main():
     )
 
     student = make_student(args.student, n_classes=len(LABELS), args=args).to(device)
-    teacher = Wav2Vec2Teacher(n_classes=len(LABELS), model_name=args.teacher_name).to(device)
+
+    # Initialize teacher based on type
+    if args.teacher_checkpoint:
+        # Load from trained checkpoint
+        print(f"Loading teacher from checkpoint: {args.teacher_checkpoint}")
+        if args.teacher_type == "vit":
+            teacher = ViTTeacher.load_from_checkpoint(args.teacher_checkpoint, device=str(device))
+        elif args.teacher_type == "efficientnet":
+            teacher = EfficientNetTeacher.load_from_checkpoint(args.teacher_checkpoint, device=str(device))
+        else:
+            raise ValueError(f"Unknown teacher type: {args.teacher_type}")
+    else:
+        # Initialize from pre-trained (not recommended - teacher needs training first)
+        print(f"⚠️  WARNING: Initializing teacher from pre-trained {args.teacher_name} without fine-tuning!")
+        print("    For best results, train the teacher first using train_teacher.py")
+        if args.teacher_type == "vit":
+            teacher = ViTTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
+        elif args.teacher_type == "efficientnet":
+            teacher = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
+        else:
+            raise ValueError(f"Unknown teacher type: {args.teacher_type}")
+        teacher.to(device)
+
     teacher.eval()
 
     opt = torch.optim.Adam(student.parameters(), lr=args.lr)
@@ -328,19 +355,19 @@ def main():
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} | "
-            f"val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc*100:.2f}% train_f1={tr_m.f1_macro*100:.2f}% | "
+            f"val_acc={va_m.acc*100:.2f}% val_f1={va_m.f1_macro*100:.2f}%"
         )
 
         if patience > 0 and no_improve >= patience:
-            print(f"[kd] early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1:.6f}")
+            print(f"[kd] early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1*100:.2f}%")
             break
 
     if best_state is not None:
         student.load_state_dict(best_state)
 
     te_m, te_true, te_pred = evaluate(student, test_dl, device, return_preds=True)
-    print(f"test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+    print(f"test_acc={te_m.acc*100:.2f}% test_f1={te_m.f1_macro*100:.2f}%")
 
     # Save test confusion matrix as a per-run artifact (CSV).
     cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))

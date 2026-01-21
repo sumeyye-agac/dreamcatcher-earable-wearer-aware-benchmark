@@ -14,4 +14,9 @@ if ! python3 -c "from huggingface_hub import get_token; import sys; sys.exit(0 i
   exit 1
 fi
 
-earable suite audio-benchmark --epochs 5 --batch_size 16 --lr 1e-3
+earable suite audio-benchmark \
+  --epochs 30 \
+  --batch_size 16 \
+  --lr 1e-3 \
+  --early_stop_patience 5 \
+  --early_stop_min_delta 0.001

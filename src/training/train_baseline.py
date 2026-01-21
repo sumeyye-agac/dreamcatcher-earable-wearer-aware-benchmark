@@ -288,8 +288,8 @@ def main():
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc:.4f} train_f1={tr_m.f1_macro:.4f} | "
-            f"val_loss={va_loss:.4f} val_acc={va_m.acc:.4f} val_f1={va_m.f1_macro:.4f}"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc*100:.2f}% train_f1={tr_m.f1_macro*100:.2f}% | "
+            f"val_loss={va_loss:.4f} val_acc={va_m.acc*100:.2f}% val_f1={va_m.f1_macro*100:.2f}%"
         )
         slog.log(
             "epoch_done",
@@ -309,7 +309,7 @@ def main():
     t_test = time.time()
     slog.log("test_eval_start")
     te_loss, te_m, te_true, te_pred = evaluate(model, test_dl, loss_fn, device, return_preds=True)
-    print(f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+    print(f"test_loss={te_loss:.4f} test_acc={te_m.acc*100:.2f}% test_f1={te_m.f1_macro*100:.2f}%")
     slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
 
     # Save test confusion matrix as a per-run artifact (CSV).

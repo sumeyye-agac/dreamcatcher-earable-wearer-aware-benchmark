@@ -1,5 +1,5 @@
 """
-Evaluate the Wav2Vec2 teacher model on DreamCatcher test set.
+Evaluate teacher models (ViT/EfficientNet) on DreamCatcher test set.
 This provides a baseline to compare student models and KD effectiveness.
 """
 from __future__ import annotations
@@ -18,17 +18,17 @@ from tqdm import tqdm
 
 from src.data.dreamcatcher_hf import LABELS, load_dreamcatcher_hf_split
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher.wav2vec2_teacher import Wav2Vec2Teacher
+from src.models.teacher import ViTTeacher, EfficientNetTeacher
 from src.utils.artifacts import run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 
 
-def collate_fn(batch, sr: int = 16000):
+def collate_fn(batch, sr: int = 16000, n_mels: int = 64):
     """
     Collate function for teacher evaluation.
-    Teacher input: raw audio waveforms [B, T]
+    Teacher input: log-mel spectrograms [B, n_mels, T]
     """
-    ys_raw = []
+    xs_mel = []
     labels = []
 
     for row in batch:
@@ -54,17 +54,28 @@ def collate_fn(batch, sr: int = 16000):
             import librosa
             y_raw = librosa.resample(y_raw, orig_sr=sample_rate, target_sr=sr)
 
-        # Ensure minimum length for Wav2Vec2 (needs at least 320 samples for feature extraction)
-        min_samples = 1024  # Safe minimum for Wav2Vec2
+        # Ensure minimum length for spectrogram generation
+        min_samples = 1024
         if y_raw.shape[0] < min_samples:
             y_raw = np.pad(y_raw, (0, min_samples - y_raw.shape[0]), mode='constant')
 
-        ys_raw.append(torch.from_numpy(y_raw))
+        # Convert to log-mel spectrogram
+        from src.data.audio_features import compute_log_mel
+        mel = compute_log_mel(y=y_raw, sr=sr, n_mels=n_mels)
+        xs_mel.append(mel)
 
         # Extract label
-        label_val = row.get("label") or row.get("event_label") or row.get("class")
-        if label_val is None:
-            raise KeyError(f"No label found in row. Keys: {list(row.keys())}")
+        label_val = None
+        if "label" in row:
+            label_val = row["label"]
+        elif "event_label" in row:
+            label_val = row["event_label"]
+        elif "class" in row:
+            label_val = row["class"]
+
+        if label_val is None or (isinstance(label_val, dict) and not label_val):
+            raise KeyError(f"No valid label found in row. Keys: {list(row.keys())}, label value: {row.get('label')}")
+
         if isinstance(label_val, (int, np.integer)):
             labels.append(int(label_val))
         else:
@@ -74,23 +85,20 @@ def collate_fn(batch, sr: int = 16000):
                 raise ValueError(f"Unknown label: {label_str}. Known labels: {list(LABEL2ID.keys())}")
             labels.append(LABEL2ID[label_str])
 
-    # Pad sequences to max length in batch
-    max_len = max(y.shape[0] for y in ys_raw)
-    ys_padded = []
-    for y in ys_raw:
-        if y.shape[0] < max_len:
-            padding = torch.zeros(max_len - y.shape[0])
-            y = torch.cat([y, padding])
-        ys_padded.append(y)
+    # Pad spectrograms to max length in batch [B, n_mels, T]
+    max_t = max(mel.shape[1] for mel in xs_mel)
+    x_pad = np.zeros((len(xs_mel), n_mels, max_t), dtype=np.float32)
+    for i, mel in enumerate(xs_mel):
+        x_pad[i, :, :mel.shape[1]] = mel
 
-    xs = torch.stack(ys_padded)
+    xs = torch.from_numpy(x_pad)
     ys = torch.tensor(labels, dtype=torch.long)
 
     return xs, ys
 
 
 def evaluate_teacher(
-    teacher: Wav2Vec2Teacher,
+    teacher,
     test_ds,
     device: str = "cpu",
     batch_size: int = 4,
@@ -126,21 +134,28 @@ def evaluate_teacher(
     all_preds = np.array(all_preds)
     all_true = np.array(all_true)
 
-    metrics = classification_metrics(all_true, all_preds, n_classes=len(LABELS))
+    metrics = classification_metrics(all_true, all_preds)
     cm = confusion_matrix(all_true, all_preds, labels=list(range(len(LABELS))))
 
     return metrics, cm
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate Wav2Vec2 teacher model")
-    parser.add_argument("--teacher_name", default="facebook/wav2vec2-base", help="HuggingFace teacher model name")
+    parser = argparse.ArgumentParser(description="Evaluate teacher model")
+    parser.add_argument(
+        "--teacher_type",
+        type=str,
+        default="vit",
+        choices=["vit", "efficientnet"],
+        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)"
+    )
+    parser.add_argument("--teacher_name", default="google/vit-base-patch16-224", help="HuggingFace teacher model name")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for inference")
     parser.add_argument("--sr", type=int, default=16000, help="Sample rate")
     parser.add_argument("--dataset_mode", default="full", choices=["full", "smoke"], help="Dataset mode")
     parser.add_argument("--max_samples", type=int, default=0, help="Max samples (0 = all)")
     parser.add_argument("--device", default="cpu", help="Device (cpu/cuda/mps)")
-    parser.add_argument("--run_name", default="wav2vec2_teacher", help="Run name")
+    parser.add_argument("--run_name", default="vit_teacher", help="Run name")
     parser.add_argument("--out_csv", default="results/leaderboard.csv", help="Leaderboard CSV")
     parser.add_argument("--steps_csv", default="results/run_steps.csv", help="Run steps CSV")
 
@@ -183,11 +198,13 @@ def main():
     print(f"Test set size: {len(test_ds)}")
 
     # Load teacher model
-    print(f"\nLoading teacher model: {args.teacher_name}")
-    teacher = Wav2Vec2Teacher(
-        model_name=args.teacher_name,
-        n_classes=len(LABELS),
-    )
+    print(f"\nLoading teacher model: {args.teacher_type} - {args.teacher_name}")
+    if args.teacher_type == "vit":
+        teacher = ViTTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
+    elif args.teacher_type == "efficientnet":
+        teacher = EfficientNetTeacher(n_classes=len(LABELS), model_name=args.teacher_name)
+    else:
+        raise ValueError(f"Unknown teacher type: {args.teacher_type}")
 
     # Evaluate
     te_m, cm = evaluate_teacher(
@@ -232,7 +249,7 @@ def main():
         "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
         "task": "audio_event_label",
-        "model": "wav2vec2_teacher",
+        "model": f"{args.teacher_type}_teacher",
         "teacher": args.teacher_name,
         "seed": 42,
         "epochs": 0,
