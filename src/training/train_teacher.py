@@ -2,6 +2,7 @@
 Train teacher models (ViT/EfficientNet) on DreamCatcher dataset.
 Fine-tunes pre-trained vision models on audio spectrograms.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -56,6 +57,7 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
 
         if a_sr != sr:
             import librosa
+
             y = librosa.resample(y, orig_sr=a_sr, target_sr=sr)
 
         # Ensure minimum length for spectrogram generation
@@ -148,24 +150,38 @@ def main():
         type=str,
         required=True,
         choices=["vit", "efficientnet"],
-        help="Teacher model type"
+        help="Teacher model type",
     )
-    parser.add_argument("--teacher_name", type=str, help="HuggingFace model name (optional override)")
+    parser.add_argument(
+        "--teacher_name", type=str, help="HuggingFace model name (optional override)"
+    )
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--n_mels", type=int, default=64, help="Number of mel bins")
     parser.add_argument("--sr", type=int, default=16000, help="Sample rate")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--early_stop_patience", type=int, default=3, help="Early stopping patience")
-    parser.add_argument("--early_stop_min_delta", type=float, default=0.001, help="Early stopping min delta")
-    parser.add_argument("--device", type=str, default="auto", choices=["auto", "cpu", "cuda", "mps"])
+    parser.add_argument(
+        "--early_stop_patience", type=int, default=3, help="Early stopping patience"
+    )
+    parser.add_argument(
+        "--early_stop_min_delta", type=float, default=0.001, help="Early stopping min delta"
+    )
+    parser.add_argument(
+        "--device", type=str, default="auto", choices=["auto", "cpu", "cuda", "mps"]
+    )
     parser.add_argument("--run_name", type=str, default="", help="Run name")
-    parser.add_argument("--out_csv", type=str, default="results/leaderboard.csv", help="Leaderboard CSV")
-    parser.add_argument("--steps_csv", type=str, default="results/run_steps.csv", help="Run steps CSV")
+    parser.add_argument(
+        "--out_csv", type=str, default="results/leaderboard.csv", help="Leaderboard CSV"
+    )
+    parser.add_argument(
+        "--steps_csv", type=str, default="results/run_steps.csv", help="Run steps CSV"
+    )
     parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
     parser.add_argument("--max_samples", type=int, default=0, help="Max samples (0 = all)")
-    parser.add_argument("--freeze_encoder", action="store_true", help="Keep encoder frozen (only train head)")
+    parser.add_argument(
+        "--freeze_encoder", action="store_true", help="Keep encoder frozen (only train head)"
+    )
 
     args = parser.parse_args()
     t_run0 = time.time()
@@ -201,12 +217,12 @@ def main():
     write_json(rd / "args.json", vars(args))
     write_json(rd / "env.json", env_snapshot())
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Training Teacher Model: {args.teacher_type}")
     print(f"Model: {args.teacher_name}")
     print(f"Epochs: {args.epochs}, Batch size: {args.batch_size}, LR: {args.lr}")
     print(f"Freeze encoder: {args.freeze_encoder}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Load datasets
     print("Loading datasets...")
@@ -285,9 +301,9 @@ def main():
     patience_counter = 0
 
     for epoch in range(args.epochs):
-        print(f"\n{'='*60}")
-        print(f"Epoch {epoch+1}/{args.epochs}")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 60}")
+        print(f"Epoch {epoch + 1}/{args.epochs}")
+        print(f"{'=' * 60}")
 
         tr_loss, tr_m = train_epoch(model, train_dl, opt, device, criterion)
         val_loss, val_m, _, _ = evaluate(model, val_dl, device, criterion)
@@ -308,29 +324,32 @@ def main():
             print(f"⏳ Patience: {patience_counter}/{args.early_stop_patience}")
 
         if patience_counter >= args.early_stop_patience:
-            print(f"\n⚠️  Early stopping triggered at epoch {epoch+1}")
+            print(f"\n⚠️  Early stopping triggered at epoch {epoch + 1}")
             break
 
     # Restore best model
-    print(f"\nRestoring best model from epoch {best_epoch+1}")
+    print(f"\nRestoring best model from epoch {best_epoch + 1}")
     model.load_state_dict(best_state)
 
     # Save model checkpoint
     checkpoint_path = rd / "teacher_checkpoint.pth"
-    torch.save({
-        'model_state_dict': best_state,
-        'model_type': args.teacher_type,
-        'model_name': args.teacher_name,
-        'n_classes': len(LABELS),
-        'best_val_f1': best_val_f1,
-        'epoch': best_epoch,
-    }, checkpoint_path)
+    torch.save(
+        {
+            "model_state_dict": best_state,
+            "model_type": args.teacher_type,
+            "model_name": args.teacher_name,
+            "n_classes": len(LABELS),
+            "best_val_f1": best_val_f1,
+            "epoch": best_epoch,
+        },
+        checkpoint_path,
+    )
     print(f"✓ Saved checkpoint: {checkpoint_path}")
 
     # Final evaluation on test set
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Final Test Evaluation")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     te_loss, te_m, te_true, te_pred = evaluate(model, test_dl, device, criterion)
     cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
@@ -425,13 +444,13 @@ def main():
         },
     )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("✓ Training complete!")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Checkpoint: {checkpoint_path}")
-    print(f"Best Val F1: {best_val_f1:.4f} (epoch {best_epoch+1})")
+    print(f"Best Val F1: {best_val_f1:.4f} (epoch {best_epoch + 1})")
     print(f"Test F1: {te_m.f1_macro:.4f}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":

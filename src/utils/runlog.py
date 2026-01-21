@@ -58,4 +58,3 @@ class StepLogger:
                     "detail": detail,
                 }
             )
-

@@ -2,6 +2,7 @@
 Evaluate teacher models (ViT/EfficientNet) on DreamCatcher test set.
 This provides a baseline to compare student models and KD effectiveness.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -52,15 +53,17 @@ def collate_fn(batch, sr: int = 16000, n_mels: int = 64):
         # Resample if needed
         if sample_rate != sr:
             import librosa
+
             y_raw = librosa.resample(y_raw, orig_sr=sample_rate, target_sr=sr)
 
         # Ensure minimum length for spectrogram generation
         min_samples = 1024
         if y_raw.shape[0] < min_samples:
-            y_raw = np.pad(y_raw, (0, min_samples - y_raw.shape[0]), mode='constant')
+            y_raw = np.pad(y_raw, (0, min_samples - y_raw.shape[0]), mode="constant")
 
         # Convert to log-mel spectrogram
         from src.data.audio_features import compute_log_mel
+
         mel = compute_log_mel(y=y_raw, sr=sr, n_mels=n_mels)
         xs_mel.append(mel)
 
@@ -74,22 +77,27 @@ def collate_fn(batch, sr: int = 16000, n_mels: int = 64):
             label_val = row["class"]
 
         if label_val is None or (isinstance(label_val, dict) and not label_val):
-            raise KeyError(f"No valid label found in row. Keys: {list(row.keys())}, label value: {row.get('label')}")
+            raise KeyError(
+                f"No valid label found in row. Keys: {list(row.keys())}, label value: {row.get('label')}"
+            )
 
         if isinstance(label_val, (int, np.integer)):
             labels.append(int(label_val))
         else:
             from src.data.dreamcatcher_hf import LABEL2ID
+
             label_str = str(label_val)
             if label_str not in LABEL2ID:
-                raise ValueError(f"Unknown label: {label_str}. Known labels: {list(LABEL2ID.keys())}")
+                raise ValueError(
+                    f"Unknown label: {label_str}. Known labels: {list(LABEL2ID.keys())}"
+                )
             labels.append(LABEL2ID[label_str])
 
     # Pad spectrograms to max length in batch [B, n_mels, T]
     max_t = max(mel.shape[1] for mel in xs_mel)
     x_pad = np.zeros((len(xs_mel), n_mels, max_t), dtype=np.float32)
     for i, mel in enumerate(xs_mel):
-        x_pad[i, :, :mel.shape[1]] = mel
+        x_pad[i, :, : mel.shape[1]] = mel
 
     xs = torch.from_numpy(x_pad)
     ys = torch.tensor(labels, dtype=torch.long)
@@ -147,12 +155,18 @@ def main():
         type=str,
         default="vit",
         choices=["vit", "efficientnet"],
-        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)"
+        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)",
     )
-    parser.add_argument("--teacher_name", default="google/vit-base-patch16-224", help="HuggingFace teacher model name")
+    parser.add_argument(
+        "--teacher_name",
+        default="google/vit-base-patch16-224",
+        help="HuggingFace teacher model name",
+    )
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for inference")
     parser.add_argument("--sr", type=int, default=16000, help="Sample rate")
-    parser.add_argument("--dataset_mode", default="full", choices=["full", "smoke"], help="Dataset mode")
+    parser.add_argument(
+        "--dataset_mode", default="full", choices=["full", "smoke"], help="Dataset mode"
+    )
     parser.add_argument("--max_samples", type=int, default=0, help="Max samples (0 = all)")
     parser.add_argument("--device", default="cpu", help="Device (cpu/cuda/mps)")
     parser.add_argument("--run_name", default="vit_teacher", help="Run name")
@@ -169,9 +183,9 @@ def main():
     write_json(rd / "args.json", vars(args))
     write_json(rd / "env.json", {})
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Evaluating Teacher Model: {args.teacher_name}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Determine device
     device = args.device
@@ -215,15 +229,15 @@ def main():
         sr=args.sr,
     )
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Teacher Test Results:")
-    print("="*60)
+    print("=" * 60)
     print(f"Accuracy:          {te_m.acc:.4f}")
     print(f"Balanced Accuracy: {te_m.balanced_acc:.4f}")
     print(f"F1 (macro):        {te_m.f1_macro:.4f}")
     print(f"Precision (macro): {te_m.precision_macro:.4f}")
     print(f"Recall (macro):    {te_m.recall_macro:.4f}")
-    print("="*60)
+    print("=" * 60)
 
     # Save confusion matrix
     cm_path = rd / "test_confusion_matrix.csv"

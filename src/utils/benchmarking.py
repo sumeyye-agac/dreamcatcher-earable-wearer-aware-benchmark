@@ -23,33 +23,36 @@ def estimate_model_size_mb(model: torch.nn.Module) -> float:
     return n_bytes / (1024 * 1024)
 
 
-def measure_cpu_latency(model: torch.nn.Module, input_shape: tuple, n_warmup: int = 10, n_runs: int = 100) -> float:
+def measure_cpu_latency(
+    model: torch.nn.Module, input_shape: tuple, n_warmup: int = 10, n_runs: int = 100
+) -> float:
     """
     Measure CPU inference latency in milliseconds.
-    
+
     Args:
         model: PyTorch model
         input_shape: Input shape tuple (batch_size, channels, height, width)
         n_warmup: Number of warmup runs
         n_runs: Number of runs for averaging
-        
+
     Returns:
         Average latency in milliseconds
     """
     model.eval()
     device = torch.device("cpu")
     model = model.to(device)
-    
+
     # Create dummy input
     dummy_input = torch.randn(input_shape).to(device)
-    
+
     # Warmup
     with torch.no_grad():
         for _ in range(n_warmup):
             _ = model(dummy_input)
-    
+
     # Measure
     import time
+
     times = []
     with torch.no_grad():
         for _ in range(n_runs):
@@ -57,7 +60,7 @@ def measure_cpu_latency(model: torch.nn.Module, input_shape: tuple, n_warmup: in
             _ = model(dummy_input)
             end = time.time()
             times.append((end - start) * 1000)  # Convert to milliseconds
-    
+
     return sum(times) / len(times)
 
 
@@ -157,17 +160,47 @@ def append_to_leaderboard(csv_path: str, row: Dict):
     """
     # Ensure directory exists
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    
+
     # Define fieldnames based on the row structure
     fieldnames = [
-        "run_started_at_utc", "run_finished_at_utc",
-        "run_name", "task", "model", "teacher", "seed", "epochs", "best_epoch", "epochs_ran", "batch_size", "lr",
-        "sr", "n_mels", "rnn_hidden", "rnn_layers", "cbam_reduction", "cbam_sa_kernel", "att_mode",
-        "alpha", "tau",
-        "dataset_mode", "max_samples", "invalid_audio_policy",
-        "best_val_f1", "best_val_acc", "best_val_precision_macro", "best_val_recall_macro", "best_val_balanced_acc",
-        "test_f1", "test_acc", "test_precision_macro", "test_recall_macro", "test_balanced_acc",
-        "params", "model_size_mb", "cpu_latency_ms", "wall_time_s",
+        "run_started_at_utc",
+        "run_finished_at_utc",
+        "run_name",
+        "task",
+        "model",
+        "teacher",
+        "seed",
+        "epochs",
+        "best_epoch",
+        "epochs_ran",
+        "batch_size",
+        "lr",
+        "sr",
+        "n_mels",
+        "rnn_hidden",
+        "rnn_layers",
+        "cbam_reduction",
+        "cbam_sa_kernel",
+        "att_mode",
+        "alpha",
+        "tau",
+        "dataset_mode",
+        "max_samples",
+        "invalid_audio_policy",
+        "best_val_f1",
+        "best_val_acc",
+        "best_val_precision_macro",
+        "best_val_recall_macro",
+        "best_val_balanced_acc",
+        "test_f1",
+        "test_acc",
+        "test_precision_macro",
+        "test_recall_macro",
+        "test_balanced_acc",
+        "params",
+        "model_size_mb",
+        "cpu_latency_ms",
+        "wall_time_s",
         "test_cm_csv",
     ]
 

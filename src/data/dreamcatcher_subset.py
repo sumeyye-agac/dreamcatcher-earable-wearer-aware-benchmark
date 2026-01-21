@@ -2,6 +2,7 @@
 Filtered subset datasets for DreamCatcher.
 Provides respiratory events subset (breathe, cough, snore).
 """
+
 from __future__ import annotations
 
 import json
@@ -53,11 +54,11 @@ class DreamCatcherRespiratorySubset:
         self.dataset_mode = dataset_mode
         self.run_name = run_name
 
-        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"Loading Respiratory Subset (breathe, cough, snore)", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
-        print(f"{'='*60}\n", file=sys.stderr)
+        print(f"{'=' * 60}\n", file=sys.stderr)
 
         # Load full dataset
         self.full_ds = DreamCatcherHFAudioDataset(
@@ -104,7 +105,9 @@ class DreamCatcherRespiratorySubset:
                 print(f"  Cache invalid ({e}), regenerating...", file=sys.stderr)
 
         # Scan dataset to find respiratory samples
-        print("  Scanning dataset for respiratory events (this may take a moment)...", file=sys.stderr)
+        print(
+            "  Scanning dataset for respiratory events (this may take a moment)...", file=sys.stderr
+        )
         indices = []
 
         for idx in range(len(self.full_ds)):
@@ -119,20 +122,27 @@ class DreamCatcherRespiratorySubset:
 
             # Progress indicator
             if (idx + 1) % 10000 == 0:
-                print(f"  Scanned {idx + 1}/{len(self.full_ds)} samples, found {len(indices)} respiratory events...", file=sys.stderr)
+                print(
+                    f"  Scanned {idx + 1}/{len(self.full_ds)} samples, found {len(indices)} respiratory events...",
+                    file=sys.stderr,
+                )
 
         print(f"  Scan complete: {len(indices)} respiratory samples found", file=sys.stderr)
 
         # Save to cache
         try:
             with open(cache_path, "w") as f:
-                json.dump({
-                    "split": self.split,
-                    "dataset_mode": self.dataset_mode,
-                    "indices": indices,
-                    "total_samples": len(self.full_ds),
-                    "respiratory_samples": len(indices),
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "split": self.split,
+                        "dataset_mode": self.dataset_mode,
+                        "indices": indices,
+                        "total_samples": len(self.full_ds),
+                        "respiratory_samples": len(indices),
+                    },
+                    f,
+                    indent=2,
+                )
             print(f"  Cached indices to {cache_path}", file=sys.stderr)
         except Exception as e:
             print(f"  Warning: Failed to cache indices: {e}", file=sys.stderr)
@@ -229,12 +239,12 @@ class DreamCatcherBalanced4Subset:
         self.dataset_mode = dataset_mode
         self.run_name = run_name
 
-        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"Loading Balanced 4-Class Subset", file=sys.stderr)
         print(f"  Classes: quiet, breathe, non_wearer, snore", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
-        print(f"{'='*60}\n", file=sys.stderr)
+        print(f"{'=' * 60}\n", file=sys.stderr)
 
         # Load full dataset
         self.full_ds = DreamCatcherHFAudioDataset(
@@ -281,7 +291,9 @@ class DreamCatcherBalanced4Subset:
                 print(f"  Cache invalid ({e}), regenerating...", file=sys.stderr)
 
         # Scan dataset to find balanced 4-class samples
-        print("  Scanning dataset for balanced 4 classes (this may take a moment)...", file=sys.stderr)
+        print(
+            "  Scanning dataset for balanced 4 classes (this may take a moment)...", file=sys.stderr
+        )
         indices = []
 
         for idx in range(len(self.full_ds)):
@@ -294,20 +306,27 @@ class DreamCatcherBalanced4Subset:
                 continue
 
             if (idx + 1) % 10000 == 0:
-                print(f"  Scanned {idx + 1}/{len(self.full_ds)} samples, found {len(indices)} balanced samples...", file=sys.stderr)
+                print(
+                    f"  Scanned {idx + 1}/{len(self.full_ds)} samples, found {len(indices)} balanced samples...",
+                    file=sys.stderr,
+                )
 
         print(f"  Scan complete: {len(indices)} balanced 4-class samples found", file=sys.stderr)
 
         # Save to cache
         try:
             with open(cache_path, "w") as f:
-                json.dump({
-                    "split": self.split,
-                    "dataset_mode": self.dataset_mode,
-                    "indices": indices,
-                    "total_samples": len(self.full_ds),
-                    "balanced4_samples": len(indices),
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "split": self.split,
+                        "dataset_mode": self.dataset_mode,
+                        "indices": indices,
+                        "total_samples": len(self.full_ds),
+                        "balanced4_samples": len(indices),
+                    },
+                    f,
+                    indent=2,
+                )
             print(f"  Cached indices to {cache_path}", file=sys.stderr)
         except Exception as e:
             print(f"  Warning: Failed to cache indices: {e}", file=sys.stderr)

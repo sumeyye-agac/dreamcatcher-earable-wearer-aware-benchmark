@@ -20,7 +20,12 @@ from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
 from src.utils.reproducibility import set_seed
-from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
+from src.utils.benchmarking import (
+    count_params,
+    estimate_model_size_mb,
+    measure_cpu_latency,
+    append_to_leaderboard,
+)
 from src.utils.runlog import StepLogger
 from src.utils.artifacts import env_snapshot, run_dir, write_json
 
@@ -117,7 +122,9 @@ def main():
     parser = argparse.ArgumentParser()
 
     # model + training
-    parser.add_argument("--model", type=str, default="tinycnn", choices=["tinycnn", "crnn", "crnn_cbam"])
+    parser.add_argument(
+        "--model", type=str, default="tinycnn", choices=["tinycnn", "crnn", "crnn_cbam"]
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=16)
@@ -195,7 +202,7 @@ def main():
     write_json(rd / "args.json", vars(args) | {"run_name": run_name})
     write_json(rd / "env.json", env_snapshot())
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Starting Training")
     print(f"  Model: {args.model}")
     print(f"  Run Name: {run_name}")
@@ -205,9 +212,12 @@ def main():
     print(f"  Seed: {args.seed}")
     print(f"  Dataset Mode: {args.dataset_mode}")
     print(f"  Steps CSV: {args.steps_csv}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
-    slog.log("run_start", detail=f"model={args.model} epochs={args.epochs} bs={args.batch_size} lr={args.lr} seed={args.seed}")
+    slog.log(
+        "run_start",
+        detail=f"model={args.model} epochs={args.epochs} bs={args.batch_size} lr={args.lr} seed={args.seed}",
+    )
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
@@ -248,7 +258,11 @@ def main():
         max_samples=args.max_samples if args.max_samples else 0,
     )
     print(f"All datasets loaded: train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}\n")
-    slog.log("load_datasets_done", t0=t_ds, detail=f"train={len(train_ds)} val={len(val_ds)} test={len(test_ds)}")
+    slog.log(
+        "load_datasets_done",
+        t0=t_ds,
+        detail=f"train={len(train_ds)} val={len(val_ds)} test={len(test_ds)}",
+    )
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     val_dl = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
@@ -292,8 +306,8 @@ def main():
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc*100:.2f}% train_f1={tr_m.f1_macro*100:.2f}% | "
-            f"val_loss={va_loss:.4f} val_acc={va_m.acc*100:.2f}% val_f1={va_m.f1_macro*100:.2f}%"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc * 100:.2f}% train_f1={tr_m.f1_macro * 100:.2f}% | "
+            f"val_loss={va_loss:.4f} val_acc={va_m.acc * 100:.2f}% val_f1={va_m.f1_macro * 100:.2f}%"
         )
         slog.log(
             "epoch_done",
@@ -302,7 +316,9 @@ def main():
         )
 
         if patience > 0 and no_improve >= patience:
-            msg = f"early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1:.6f}"
+            msg = (
+                f"early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1:.6f}"
+            )
             print(msg)
             slog.log("early_stop", detail=msg)
             break
@@ -313,8 +329,14 @@ def main():
     t_test = time.time()
     slog.log("test_eval_start")
     te_loss, te_m, te_true, te_pred = evaluate(model, test_dl, loss_fn, device, return_preds=True)
-    print(f"test_loss={te_loss:.4f} test_acc={te_m.acc*100:.2f}% test_f1={te_m.f1_macro*100:.2f}%")
-    slog.log("test_eval_done", t0=t_test, detail=f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}")
+    print(
+        f"test_loss={te_loss:.4f} test_acc={te_m.acc * 100:.2f}% test_f1={te_m.f1_macro * 100:.2f}%"
+    )
+    slog.log(
+        "test_eval_done",
+        t0=t_test,
+        detail=f"test_loss={te_loss:.4f} test_acc={te_m.acc:.4f} test_f1={te_m.f1_macro:.4f}",
+    )
 
     # Save test confusion matrix as a per-run artifact (CSV).
     cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
@@ -358,9 +380,15 @@ def main():
         "invalid_audio_policy": args.invalid_audio_policy,
         "best_val_f1": round(best_val_f1, 6),
         "best_val_acc": round(best_val_metrics.acc, 6) if best_val_metrics is not None else "",
-        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6) if best_val_metrics is not None else "",
-        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6) if best_val_metrics is not None else "",
-        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6) if best_val_metrics is not None else "",
+        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6)
+        if best_val_metrics is not None
+        else "",
+        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6)
+        if best_val_metrics is not None
+        else "",
+        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6)
+        if best_val_metrics is not None
+        else "",
         "test_f1": round(te_m.f1_macro, 6),
         "test_acc": round(te_m.acc, 6),
         "test_precision_macro": round(te_m.precision_macro, 6),

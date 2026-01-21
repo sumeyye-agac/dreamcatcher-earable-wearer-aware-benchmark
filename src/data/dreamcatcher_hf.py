@@ -67,12 +67,17 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
 
     # Important: "smoke" must not reuse the already-prepared "full" cache artifacts.
     # Give it a separate cache root so datasets doesn't silently reuse the full prepared dataset.
-    effective_cache_dir = cache_dir if dataset_mode == "full" else os.path.join(cache_dir, "_dreamcatcher_smoke")
+    effective_cache_dir = (
+        cache_dir if dataset_mode == "full" else os.path.join(cache_dir, "_dreamcatcher_smoke")
+    )
 
     key = (dataset_mode, effective_cache_dir)
     if key in _BUILDER_CACHE:
         if logger is not None:
-            logger.log("dataset_builder_cache_hit", detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}")
+            logger.log(
+                "dataset_builder_cache_hit",
+                detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}",
+            )
         return _BUILDER_CACHE[key]
 
     if dataset_mode == "smoke":
@@ -114,7 +119,10 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
             )
 
     if logger is not None:
-        logger.log("dataset_builder_prepare_start", detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}")
+        logger.log(
+            "dataset_builder_prepare_start",
+            detail=f"mode={dataset_mode} cache_dir={effective_cache_dir}",
+        )
     t0 = time.time()
     builder = load_dataset_builder(
         "THU-PI-Sensing/DreamCatcher",
@@ -149,7 +157,9 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
                 flush=True,
             )
 
-    hb_thread = threading.Thread(target=_heartbeat_loop, name="dreamcatcher_hf_heartbeat", daemon=True)
+    hb_thread = threading.Thread(
+        target=_heartbeat_loop, name="dreamcatcher_hf_heartbeat", daemon=True
+    )
     hb_thread.start()
     try:
         builder.download_and_prepare(download_config=download_config)
@@ -199,8 +209,8 @@ class DreamCatcherHFAudioDataset:
     ):
         self.cfg = cfg or DreamCatcherHFAudioConfig()
         self._logger = StepLogger(run_name=run_name, csv_path=steps_csv)
-        
-        print(f"\n{'='*60}", file=sys.stderr)
+
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"Loading DreamCatcher Dataset", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
         print(f"  Config: sleep_event_classification", file=sys.stderr)
@@ -208,16 +218,21 @@ class DreamCatcherHFAudioDataset:
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
         if run_name:
             print(f"  Run Name: {run_name}", file=sys.stderr)
-        print(f"{'='*60}\n", file=sys.stderr)
-        
-        cache_dir = cache_dir or os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
+        print(f"{'=' * 60}\n", file=sys.stderr)
+
+        cache_dir = cache_dir or os.environ.get(
+            "HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets")
+        )
         du = shutil.disk_usage(cache_dir)
         self._logger.log(
             "dataset_init",
-            detail=f"split={split} mode={dataset_mode} cache_dir={cache_dir} free_gb={du.free/1e9:.1f}",
+            detail=f"split={split} mode={dataset_mode} cache_dir={cache_dir} free_gb={du.free / 1e9:.1f}",
         )
 
-        print("Preparing dataset (download + generate). This can take a while on first run...", file=sys.stderr)
+        print(
+            "Preparing dataset (download + generate). This can take a while on first run...",
+            file=sys.stderr,
+        )
         t_prepare = time.time()
         builder = _get_builder(dataset_mode=dataset_mode, cache_dir=cache_dir, logger=self._logger)
         self._logger.log("dataset_builder_ready", t0=t_prepare)
@@ -306,6 +321,7 @@ class DreamCatcherHFAudioDataset:
 
         if sr != self.cfg.sample_rate:
             import librosa
+
             y = librosa.resample(y, orig_sr=sr, target_sr=self.cfg.sample_rate)
 
         # Avoid librosa warnings / degenerate spectrograms for extremely short clips
@@ -348,7 +364,9 @@ def load_dreamcatcher_hf_split(
 
     Returns a `datasets.Dataset` (rows still contain raw audio dicts).
     """
-    cache_dir = cache_dir or os.environ.get("HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets"))
+    cache_dir = cache_dir or os.environ.get(
+        "HF_DATASETS_CACHE", os.path.expanduser("~/.cache/huggingface/datasets")
+    )
     logger = StepLogger(run_name=run_name, csv_path=steps_csv)
     builder = _get_builder(dataset_mode=dataset_mode, cache_dir=cache_dir, logger=logger)
     return builder.as_dataset(split=split)

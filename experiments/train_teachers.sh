@@ -8,22 +8,10 @@ source dream-env/bin/activate
 mkdir -p logs
 
 echo "========================================"
-echo "Training Teacher Models"
+echo "Training EfficientNet Teacher"
 echo "========================================"
 echo ""
 
-echo "== Training ViT Teacher (fine-tuned) =="
-python3 -m src.training.train_teacher \
-  --teacher_type vit \
-  --epochs 10 \
-  --batch_size 8 \
-  --lr 1e-4 \
-  --early_stop_patience 3 \
-  --early_stop_min_delta 0.001 \
-  --run_name vit_teacher_finetuned \
-  2>&1 | tee logs/vit_teacher_train.log
-
-echo ""
 echo "== Training EfficientNet Teacher (fine-tuned) =="
 python3 -m src.training.train_teacher \
   --teacher_type efficientnet \
@@ -37,11 +25,9 @@ python3 -m src.training.train_teacher \
 
 echo ""
 echo "========================================"
-echo "✓ Teacher training complete!"
+echo "Teacher training complete"
 echo "========================================"
 echo ""
-echo "Checkpoints saved in results/runs/"
-echo "- results/runs/vit_teacher_finetuned/teacher_checkpoint.pth"
-echo "- results/runs/efficientnet_teacher_finetuned/teacher_checkpoint.pth"
+echo "Checkpoint saved: results/runs/efficientnet_teacher_finetuned/teacher_checkpoint.pth"
 echo ""
-echo "Use these checkpoints for knowledge distillation experiments."
+echo "Use this checkpoint for knowledge distillation experiments."

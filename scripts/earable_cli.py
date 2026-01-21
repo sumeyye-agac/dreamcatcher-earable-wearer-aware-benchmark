@@ -21,7 +21,7 @@ def _require_hf_token() -> None:
         raise SystemExit(
             "ERROR: HuggingFace token not found. DreamCatcher is a gated dataset.\n"
             "Run: hf auth login\n"
-            "Or set: export HF_TOKEN=\"hf_...\"; export HUGGINGFACE_HUB_TOKEN=\"$HF_TOKEN\""
+            'Or set: export HF_TOKEN="hf_..."; export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"'
         )
 
 
@@ -51,7 +51,19 @@ def suite_audio_smoke(args: argparse.Namespace) -> None:
     for model, extra in [
         ("tinycnn", []),
         ("crnn", ["--rnn_hidden", "64", "--rnn_layers", "1"]),
-        ("crnn_cbam", ["--rnn_hidden", "64", "--rnn_layers", "1", "--cbam_reduction", "8", "--cbam_sa_kernel", "7"]),
+        (
+            "crnn_cbam",
+            [
+                "--rnn_hidden",
+                "64",
+                "--rnn_layers",
+                "1",
+                "--cbam_reduction",
+                "8",
+                "--cbam_sa_kernel",
+                "7",
+            ],
+        ),
     ]:
         run_name = f"{model}_smoke"
         _run(
@@ -85,7 +97,19 @@ def suite_audio_benchmark(args: argparse.Namespace) -> None:
     for model, extra in [
         ("tinycnn", []),
         ("crnn", ["--rnn_hidden", "64", "--rnn_layers", "1"]),
-        ("crnn_cbam", ["--rnn_hidden", "64", "--rnn_layers", "1", "--cbam_reduction", "8", "--cbam_sa_kernel", "7"]),
+        (
+            "crnn_cbam",
+            [
+                "--rnn_hidden",
+                "64",
+                "--rnn_layers",
+                "1",
+                "--cbam_reduction",
+                "8",
+                "--cbam_sa_kernel",
+                "7",
+            ],
+        ),
     ]:
         run_name = f"{model}_baseline"
         cmd = [
@@ -109,9 +133,9 @@ def suite_audio_benchmark(args: argparse.Namespace) -> None:
             *extra,
         ]
         # Add early stopping parameters if provided
-        if hasattr(args, 'early_stop_patience') and args.early_stop_patience:
+        if hasattr(args, "early_stop_patience") and args.early_stop_patience:
             cmd.extend(["--early_stop_patience", str(args.early_stop_patience)])
-        if hasattr(args, 'early_stop_min_delta') and args.early_stop_min_delta:
+        if hasattr(args, "early_stop_min_delta") and args.early_stop_min_delta:
             cmd.extend(["--early_stop_min_delta", str(args.early_stop_min_delta)])
         _run(cmd)
 
@@ -120,7 +144,19 @@ def suite_kd_smoke(args: argparse.Namespace) -> None:
     _require_hf_token()
     for student, extra in [
         ("crnn", ["--rnn_hidden", "64", "--rnn_layers", "1"]),
-        ("crnn_cbam", ["--rnn_hidden", "64", "--rnn_layers", "1", "--cbam_reduction", "8", "--cbam_sa_kernel", "7"]),
+        (
+            "crnn_cbam",
+            [
+                "--rnn_hidden",
+                "64",
+                "--rnn_layers",
+                "1",
+                "--cbam_reduction",
+                "8",
+                "--cbam_sa_kernel",
+                "7",
+            ],
+        ),
     ]:
         run_name = "crnn_rbkd_smoke" if student == "crnn" else "crnn_cbam_rbkdatt_smoke"
         _run(
@@ -200,7 +236,12 @@ def sweep_kd(args: argparse.Namespace) -> None:
         if student in {"crnn", "crnn_cbam"}:
             extra += ["--rnn_hidden", str(args.rnn_hidden), "--rnn_layers", str(args.rnn_layers)]
         if student == "crnn_cbam":
-            extra += ["--cbam_reduction", str(args.cbam_reduction), "--cbam_sa_kernel", str(args.cbam_sa_kernel)]
+            extra += [
+                "--cbam_reduction",
+                str(args.cbam_reduction),
+                "--cbam_sa_kernel",
+                str(args.cbam_sa_kernel),
+            ]
             if mode:
                 extra += ["--att_mode", str(mode)]
 
@@ -355,7 +396,7 @@ def summarize_runs(args: argparse.Namespace) -> None:
         a = r["args"]
         print(
             f"  - {r['run_name']}: {metric}={v:.6f} "
-            f"(alpha={a.get('alpha','')}, tau={a.get('tau','')}, lr={a.get('lr','')}, bs={a.get('batch_size','')}, mode={a.get('dataset_mode','')})"
+            f"(alpha={a.get('alpha', '')}, tau={a.get('tau', '')}, lr={a.get('lr', '')}, bs={a.get('batch_size', '')}, mode={a.get('dataset_mode', '')})"
         )
 
 
@@ -372,8 +413,12 @@ def main(argv: list[str] | None = None) -> int:
     p_suite.add_argument("--epochs", type=int, default=1)
     p_suite.add_argument("--batch_size", type=int, default=8)
     p_suite.add_argument("--lr", type=float, default=1e-3)
-    p_suite.add_argument("--early_stop_patience", type=int, default=0, help="Early stopping patience (0=disabled)")
-    p_suite.add_argument("--early_stop_min_delta", type=float, default=0.0, help="Minimum improvement threshold")
+    p_suite.add_argument(
+        "--early_stop_patience", type=int, default=0, help="Early stopping patience (0=disabled)"
+    )
+    p_suite.add_argument(
+        "--early_stop_min_delta", type=float, default=0.0, help="Minimum improvement threshold"
+    )
     p_suite.add_argument(
         "--max_samples",
         type=int,
@@ -385,7 +430,9 @@ def main(argv: list[str] | None = None) -> int:
     p_sweep_sub = p_sweep.add_subparsers(dest="sweep_cmd", required=True)
 
     p_kd = p_sweep_sub.add_parser("kd", help="KD hyperparameter sweep (grid).")
-    p_kd.add_argument("--students", type=str, default="crnn,crnn_cbam", help="Comma list, e.g. crnn,crnn_cbam")
+    p_kd.add_argument(
+        "--students", type=str, default="crnn,crnn_cbam", help="Comma list, e.g. crnn,crnn_cbam"
+    )
     p_kd.add_argument("--alpha", type=str, required=True, help="Comma list, e.g. 0.3,0.7")
     p_kd.add_argument("--tau", type=str, required=True, help="Comma list, e.g. 2,5,10")
     p_kd.add_argument("--lr", type=str, required=True, help="Comma list, e.g. 1e-3,3e-4")
@@ -393,10 +440,19 @@ def main(argv: list[str] | None = None) -> int:
     p_kd.add_argument("--epochs", type=int, default=1)
     p_kd.add_argument("--seed", type=int, default=42)
     p_kd.add_argument("--dataset_mode", type=str, default="smoke", choices=["full", "smoke"])
-    p_kd.add_argument("--max_samples", type=int, default=512, help="Per-split cap when dataset_mode=smoke")
+    p_kd.add_argument(
+        "--max_samples", type=int, default=512, help="Per-split cap when dataset_mode=smoke"
+    )
     p_kd.add_argument("--teacher_name", type=str, default="google/efficientnet-b0")
-    p_kd.add_argument("--run_prefix", type=str, default="", help="Prefix for run_name; defaults to timestamped prefix")
-    p_kd.add_argument("--max_runs", type=int, default=0, help="Optional cap on number of runs (0 = no cap)")
+    p_kd.add_argument(
+        "--run_prefix",
+        type=str,
+        default="",
+        help="Prefix for run_name; defaults to timestamped prefix",
+    )
+    p_kd.add_argument(
+        "--max_runs", type=int, default=0, help="Optional cap on number of runs (0 = no cap)"
+    )
     p_kd.add_argument("--dry_run", action="store_true", help="Print commands without executing")
     p_kd.add_argument("--jobs", type=int, default=1, help="Number of parallel workers (default: 1)")
     p_kd.add_argument("--rnn_hidden", type=int, default=64)
@@ -410,10 +466,22 @@ def main(argv: list[str] | None = None) -> int:
         help="Comma-list. Only used when student=crnn_cbam: cbam,ca,sa",
     )
 
-    p_sum = sub.add_parser("summarize", help="Summarize runs under results/runs (e.g., after a sweep).")
+    p_sum = sub.add_parser(
+        "summarize", help="Summarize runs under results/runs (e.g., after a sweep)."
+    )
     p_sum.add_argument("--runs_dir", type=str, default="results/runs")
-    p_sum.add_argument("--prefix", type=str, default="", help="Only include run dirs whose name starts with this prefix.")
-    p_sum.add_argument("--metric", type=str, default="f1_macro", help="Metric key in metrics.json (default: test.f1_macro).")
+    p_sum.add_argument(
+        "--prefix",
+        type=str,
+        default="",
+        help="Only include run dirs whose name starts with this prefix.",
+    )
+    p_sum.add_argument(
+        "--metric",
+        type=str,
+        default="f1_macro",
+        help="Metric key in metrics.json (default: test.f1_macro).",
+    )
     p_sum.add_argument("--topk", type=int, default=10)
 
     args = parser.parse_args(argv)
@@ -451,4 +519,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

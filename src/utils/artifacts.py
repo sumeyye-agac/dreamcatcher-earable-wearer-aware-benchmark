@@ -35,4 +35,3 @@ def env_snapshot() -> dict[str, Any]:
         if k in os.environ:
             snap[k] = "***set***"
     return snap
-

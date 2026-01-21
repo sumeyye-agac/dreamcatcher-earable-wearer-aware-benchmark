@@ -1,2 +1,1 @@
 """Models (students + teacher)."""
-

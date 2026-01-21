@@ -16,8 +16,8 @@ class ChannelAttention(nn.Module):
     def forward(self, x):
         # x: [B, C, F, T]
         b, c, f, t = x.shape
-        avg = x.mean(dim=(2, 3))       # [B, C]
-        mx = x.amax(dim=(2, 3))        # [B, C]
+        avg = x.mean(dim=(2, 3))  # [B, C]
+        mx = x.amax(dim=(2, 3))  # [B, C]
         w = self.mlp(avg) + self.mlp(mx)
         w = self.sigmoid(w).view(b, c, 1, 1)
         return x * w
@@ -32,10 +32,10 @@ class SpatialAttention(nn.Module):
 
     def forward(self, x):
         # x: [B, C, F, T]
-        avg = x.mean(dim=1, keepdim=True)   # [B, 1, F, T]
+        avg = x.mean(dim=1, keepdim=True)  # [B, 1, F, T]
         mx, _ = x.max(dim=1, keepdim=True)  # [B, 1, F, T]
-        a = torch.cat([avg, mx], dim=1)     # [B, 2, F, T]
-        w = self.sigmoid(self.conv(a))      # [B, 1, F, T]
+        a = torch.cat([avg, mx], dim=1)  # [B, 2, F, T]
+        w = self.sigmoid(self.conv(a))  # [B, 1, F, T]
         return x * w
 
 

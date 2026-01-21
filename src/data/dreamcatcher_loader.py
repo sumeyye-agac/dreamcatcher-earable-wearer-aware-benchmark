@@ -55,6 +55,7 @@ class DreamCatcherAudioDataset:
         if sr != self.sr:
             # librosa resample (lazy import to keep imports minimal)
             import librosa
+
             y = librosa.resample(y.astype(np.float32), orig_sr=sr, target_sr=self.sr)
 
         # Compute log-mel

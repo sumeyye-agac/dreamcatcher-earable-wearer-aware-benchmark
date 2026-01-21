@@ -2,6 +2,7 @@
 EfficientNet teacher for knowledge distillation.
 Lightweight and efficient vision model for spectrograms.
 """
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -60,7 +61,7 @@ class EfficientNetTeacher(nn.Module):
         spec_min = spec_np.min(axis=(1, 2), keepdims=True)
         spec_max = spec_np.max(axis=(1, 2), keepdims=True)
         spec_norm = (spec_np - spec_min) / (spec_max - spec_min + 1e-8)
-        spec_norm = (spec_norm * 255).astype('uint8')
+        spec_norm = (spec_norm * 255).astype("uint8")
 
         # Convert to 3-channel by replicating
         spec_rgb = np.stack([spec_norm] * 3, axis=1)
@@ -73,7 +74,7 @@ class EfficientNetTeacher(nn.Module):
 
             # Use EfficientNet processor to resize to 224x224 and normalize
             processed = self.processor(images=img, return_tensors="pt")
-            images.append(processed['pixel_values'][0])
+            images.append(processed["pixel_values"][0])
 
         # Stack batch
         images = torch.stack(images).to(device)
@@ -116,10 +117,7 @@ class EfficientNetTeacher(nn.Module):
             Loaded EfficientNetTeacher model
         """
         checkpoint = torch.load(checkpoint_path, map_location=device)
-        model = cls(
-            n_classes=checkpoint['n_classes'],
-            model_name=checkpoint['model_name']
-        )
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model = cls(n_classes=checkpoint["n_classes"], model_name=checkpoint["model_name"])
+        model.load_state_dict(checkpoint["model_state_dict"])
         model.to(device)
         return model

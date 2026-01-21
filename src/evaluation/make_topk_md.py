@@ -52,6 +52,7 @@ def main():
     md = to_md_table(top)
 
     import os
+
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(md + "\n")

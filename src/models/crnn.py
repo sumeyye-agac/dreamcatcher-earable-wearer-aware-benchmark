@@ -6,17 +6,16 @@ class CRNN(nn.Module):
     """
     CRNN for log-mel inputs [B, 1, n_mels, time]
     """
+
     def __init__(self, n_classes: int, rnn_hidden: int = 64, rnn_layers: int = 1):
         super().__init__()
         self.cnn = nn.Sequential(
             nn.Conv2d(1, 16, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
-
             nn.Conv2d(16, 32, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
-
             nn.Conv2d(32, 64, 3, padding=1),
             nn.ReLU(),
         )

@@ -26,7 +26,12 @@ from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
 from src.models.teacher import ViTTeacher, EfficientNetTeacher
 from src.utils.reproducibility import set_seed
-from src.utils.benchmarking import count_params, estimate_model_size_mb, measure_cpu_latency, append_to_leaderboard
+from src.utils.benchmarking import (
+    count_params,
+    estimate_model_size_mb,
+    measure_cpu_latency,
+    append_to_leaderboard,
+)
 from src.utils.artifacts import env_snapshot, run_dir, write_json
 
 
@@ -81,6 +86,7 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
 
         if a_sr != sr:
             import librosa
+
             y = librosa.resample(y, orig_sr=a_sr, target_sr=sr)
 
         # Avoid degenerate spectrograms / teacher crashes on extremely short clips
@@ -104,11 +110,14 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             label_str = str(label_val)
             # Map string label to 9-class index first
             from src.data.dreamcatcher_hf import LABEL2ID as LABEL2ID_9CLASS
+
             label_9class = LABEL2ID_9CLASS[label_str]
 
         # Remap to 3-class space
         if label_9class not in RESPIRATORY_LABEL_MAP:
-            raise ValueError(f"Invalid label {label_9class}, expected one of {RESPIRATORY_ORIGINAL_INDICES}")
+            raise ValueError(
+                f"Invalid label {label_9class}, expected one of {RESPIRATORY_ORIGINAL_INDICES}"
+            )
         label_3class = RESPIRATORY_LABEL_MAP[label_9class]
         ys.append(label_3class)
 
@@ -193,7 +202,9 @@ def evaluate(student, dl, device, *, return_preds: bool = False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--student", type=str, default="crnn", choices=["tinycnn", "crnn", "crnn_cbam"])
+    parser.add_argument(
+        "--student", type=str, default="crnn", choices=["tinycnn", "crnn", "crnn_cbam"]
+    )
 
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=8)
@@ -244,7 +255,7 @@ def main():
         type=str,
         default="vit",
         choices=["vit", "efficientnet"],
-        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)"
+        help="Teacher model type: vit (ViT-base) or efficientnet (EfficientNet-b0)",
     )
     parser.add_argument("--teacher_name", type=str, default="google/vit-base-patch16-224")
     parser.add_argument("--dataset_mode", type=str, default="full", choices=["full", "smoke"])
@@ -258,6 +269,7 @@ def main():
 
     args = parser.parse_args()
     import time
+
     t_run0 = time.time()
     run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -281,13 +293,25 @@ def main():
     write_json(rd / "env.json", env_snapshot())
 
     train_ds = load_respiratory_hf_split(
-        "train", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+        "train",
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
     val_ds = load_respiratory_hf_split(
-        "validation", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+        "validation",
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
     test_ds = load_respiratory_hf_split(
-        "test", dataset_mode=args.dataset_mode, run_name=run_name, steps_csv=args.steps_csv, cache_dir=(args.cache_dir or None)
+        "test",
+        dataset_mode=args.dataset_mode,
+        run_name=run_name,
+        steps_csv=args.steps_csv,
+        cache_dir=(args.cache_dir or None),
     )
 
     if args.max_samples and args.max_samples > 0:
@@ -344,7 +368,9 @@ def main():
 
     for epoch in range(1, args.epochs + 1):
         epochs_ran = epoch
-        tr_loss, tr_m = run_train_epoch(student, teacher, train_dl, opt, device, args.alpha, args.tau)
+        tr_loss, tr_m = run_train_epoch(
+            student, teacher, train_dl, opt, device, args.alpha, args.tau
+        )
         va_m = evaluate(student, val_dl, device)
 
         improved = va_m.f1_macro > (best_val_f1 + min_delta)
@@ -359,19 +385,21 @@ def main():
 
         print(
             f"epoch={epoch} "
-            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc*100:.2f}% train_f1={tr_m.f1_macro*100:.2f}% | "
-            f"val_acc={va_m.acc*100:.2f}% val_f1={va_m.f1_macro*100:.2f}%"
+            f"train_loss={tr_loss:.4f} train_acc={tr_m.acc * 100:.2f}% train_f1={tr_m.f1_macro * 100:.2f}% | "
+            f"val_acc={va_m.acc * 100:.2f}% val_f1={va_m.f1_macro * 100:.2f}%"
         )
 
         if patience > 0 and no_improve >= patience:
-            print(f"[kd] early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1*100:.2f}%")
+            print(
+                f"[kd] early_stop at epoch={epoch} best_epoch={best_epoch} best_val_f1={best_val_f1 * 100:.2f}%"
+            )
             break
 
     if best_state is not None:
         student.load_state_dict(best_state)
 
     te_m, te_true, te_pred = evaluate(student, test_dl, device, return_preds=True)
-    print(f"test_acc={te_m.acc*100:.2f}% test_f1={te_m.f1_macro*100:.2f}%")
+    print(f"test_acc={te_m.acc * 100:.2f}% test_f1={te_m.f1_macro * 100:.2f}%")
 
     # Save test confusion matrix as a per-run artifact (CSV).
     cm = confusion_matrix(te_true, te_pred, labels=list(range(len(LABELS))))
@@ -416,9 +444,15 @@ def main():
         "invalid_audio_policy": "",
         "best_val_f1": round(best_val_f1, 6),
         "best_val_acc": round(best_val_metrics.acc, 6) if best_val_metrics is not None else "",
-        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6) if best_val_metrics is not None else "",
-        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6) if best_val_metrics is not None else "",
-        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6) if best_val_metrics is not None else "",
+        "best_val_precision_macro": round(best_val_metrics.precision_macro, 6)
+        if best_val_metrics is not None
+        else "",
+        "best_val_recall_macro": round(best_val_metrics.recall_macro, 6)
+        if best_val_metrics is not None
+        else "",
+        "best_val_balanced_acc": round(best_val_metrics.balanced_acc, 6)
+        if best_val_metrics is not None
+        else "",
         "test_f1": round(te_m.f1_macro, 6),
         "test_acc": round(te_m.acc, 6),
         "test_precision_macro": round(te_m.precision_macro, 6),
