@@ -6,7 +6,7 @@ Treats log-mel spectrograms as images.
 import numpy as np
 import torch
 import torch.nn as nn
-from transformers import ViTModel, ViTImageProcessor
+from transformers import ViTImageProcessor, ViTModel
 
 
 class ViTTeacher(nn.Module):

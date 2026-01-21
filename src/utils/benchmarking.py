@@ -1,8 +1,8 @@
-import torch
 import csv
 import os
-from typing import Dict
 from contextlib import contextmanager
+
+import torch
 
 
 def count_params(model: torch.nn.Module) -> int:
@@ -114,7 +114,7 @@ def _normalize_leaderboard_csv(csv_path: str, fieldnames: list[str]) -> None:
             w.writerow(fieldnames)
         return
 
-    with open(csv_path, "r", newline="") as f:
+    with open(csv_path, newline="") as f:
         rows = list(csv.reader(f))
     if not rows:
         with open(csv_path, "w", newline="") as f:
@@ -153,7 +153,7 @@ def _normalize_leaderboard_csv(csv_path: str, fieldnames: list[str]) -> None:
             w.writerow(d)
 
 
-def append_to_leaderboard(csv_path: str, row: Dict):
+def append_to_leaderboard(csv_path: str, row: dict):
     """
     Append a row to the leaderboard CSV file.
     Creates the file with headers if it doesn't exist.

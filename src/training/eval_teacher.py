@@ -8,8 +8,7 @@ from __future__ import annotations
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
 import numpy as np
 import torch
@@ -19,7 +18,7 @@ from tqdm import tqdm
 
 from src.data.dreamcatcher_hf import LABELS, load_dreamcatcher_hf_split
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher import ViTTeacher, EfficientNetTeacher
+from src.models.teacher import EfficientNetTeacher, ViTTeacher
 from src.utils.artifacts import run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 
@@ -81,7 +80,7 @@ def collate_fn(batch, sr: int = 16000, n_mels: int = 64):
                 f"No valid label found in row. Keys: {list(row.keys())}, label value: {row.get('label')}"
             )
 
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             labels.append(int(label_val))
         else:
             from src.data.dreamcatcher_hf import LABEL2ID
@@ -176,7 +175,7 @@ def main():
     args = parser.parse_args()
 
     run_name = args.run_name
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
     t_run0 = time.time()
 
     rd = run_dir(run_name)
@@ -255,7 +254,7 @@ def main():
     lat_ms = 0.0
 
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     # Save to leaderboard
     row = {

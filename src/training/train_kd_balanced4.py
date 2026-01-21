@@ -2,18 +2,19 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import UTC, datetime
+
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from datetime import datetime, timezone
 from sklearn.metrics import confusion_matrix
+from torch.utils.data import DataLoader
 
 from src.data.audio_features import compute_log_mel
 from src.data.dreamcatcher_subset import (
+    BALANCED4_LABEL_MAP,
     BALANCED4_LABELS,
     BALANCED4_ORIGINAL_INDICES,
-    BALANCED4_LABEL_MAP,
     load_balanced4_hf_split,
 )
 
@@ -21,18 +22,18 @@ from src.data.dreamcatcher_subset import (
 LABELS = BALANCED4_LABELS
 LABEL2ID = {label: idx for idx, label in enumerate(LABELS)}
 from src.evaluation.metrics import classification_metrics
-from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
-from src.models.teacher import ViTTeacher, EfficientNetTeacher
-from src.utils.reproducibility import set_seed
+from src.models.teacher import EfficientNetTeacher, ViTTeacher
+from src.models.tinycnn import TinyCNN
+from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import (
+    append_to_leaderboard,
     count_params,
     estimate_model_size_mb,
     measure_cpu_latency,
-    append_to_leaderboard,
 )
-from src.utils.artifacts import env_snapshot, run_dir, write_json
+from src.utils.reproducibility import set_seed
 
 
 def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
@@ -106,7 +107,7 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
         # Remap label from 9-class (5,6,7) to 3-class (0,1,2)
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             label_9class = int(label_val)
         else:
             label_str = str(label_val)
@@ -281,7 +282,7 @@ def main():
     import time
 
     t_run0 = time.time()
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
@@ -426,7 +427,7 @@ def main():
     model_size_mb = estimate_model_size_mb(student)
     lat_ms = measure_cpu_latency(student, input_shape=(1, 1, args.n_mels, args.latency_T))
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     row = {
         "run_started_at_utc": run_started_at_utc,

@@ -4,8 +4,8 @@ Quick runner script for class distribution visualization.
 Usage: python plot_distribution.py [--confusion-matrix PATH] [--run-steps PATH] [--output-dir PATH]
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 if __name__ == "__main__":

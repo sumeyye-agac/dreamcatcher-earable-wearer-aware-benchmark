@@ -6,11 +6,11 @@ Uses confusion matrix and run_steps.csv to derive dataset split sizes.
 
 import csv
 import re
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 # Class labels from DreamCatcher
 LABELS = [
@@ -34,9 +34,9 @@ def load_class_counts_from_confusion_matrix(cm_path):
     class_names = []
     class_counts = []
 
-    with open(cm_path, "r") as f:
+    with open(cm_path) as f:
         reader = csv.reader(f)
-        header = next(reader)  # Skip header
+        next(reader)  # Skip header
 
         for row in reader:
             if len(row) > 0:
@@ -58,7 +58,7 @@ def extract_split_sizes_from_runsteps(runsteps_csv):
     """
     splits = {}
 
-    with open(runsteps_csv, "r") as f:
+    with open(runsteps_csv) as f:
         reader = csv.DictReader(f, fieldnames=["ts", "run_name", "stage", "dt_s", "detail"])
 
         for row in reader:
@@ -143,7 +143,7 @@ def create_visualizations(distributions, output_dir, split_name="total"):
 
     ax.set_ylabel("Number of Samples", fontsize=14, fontweight="bold")
     ax.set_title(
-        f"DreamCatcher Dataset - Class Distribution (All Splits Combined)",
+        "DreamCatcher Dataset - Class Distribution (All Splits Combined)",
         fontsize=16,
         fontweight="bold",
         pad=20,
@@ -199,7 +199,7 @@ def create_visualizations(distributions, output_dir, split_name="total"):
     sorted_indices = np.argsort(class_counts)[::-1]
     sorted_names = [class_names[i] for i in sorted_indices]
     sorted_counts = [class_counts[i] for i in sorted_indices]
-    sorted_percentages = [percentages[i] for i in sorted_indices]
+    [percentages[i] for i in sorted_indices]
 
     colors = plt.cm.tab10(np.linspace(0, 1, len(sorted_names)))
 
@@ -230,7 +230,7 @@ def create_visualizations(distributions, output_dir, split_name="total"):
     )
 
     ax.set_title(
-        f"DreamCatcher Dataset - Class Distribution (%)", fontsize=16, fontweight="bold", pad=20
+        "DreamCatcher Dataset - Class Distribution (%)", fontsize=16, fontweight="bold", pad=20
     )
 
     pie_filename = f"class_distribution_pie_{split_name}.png"
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         if split_sizes:
             print(f"  ✓ Found split sizes: {split_sizes}")
         else:
-            print(f"  ⚠ Could not extract split sizes from run_steps.csv")
+            print("  ⚠ Could not extract split sizes from run_steps.csv")
 
     # Estimate total distribution across all splits
     if split_sizes:
@@ -315,5 +315,5 @@ if __name__ == "__main__":
     create_visualizations(distributions, output_directory, split_name="total")
 
     print(f"\n✓ Visualizations saved to: {output_directory}")
-    print(f"  - class_distribution_bar_total.png")
-    print(f"  - class_distribution_pie_total.png")
+    print("  - class_distribution_bar_total.png")
+    print("  - class_distribution_pie_total.png")

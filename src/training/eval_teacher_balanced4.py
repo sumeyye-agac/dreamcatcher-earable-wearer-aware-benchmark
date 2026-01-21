@@ -8,8 +8,7 @@ from __future__ import annotations
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
 import numpy as np
 import torch
@@ -18,16 +17,16 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.data.dreamcatcher_subset import (
+    BALANCED4_LABEL_MAP,
     BALANCED4_LABELS,
     BALANCED4_ORIGINAL_INDICES,
-    BALANCED4_LABEL_MAP,
     load_balanced4_hf_split,
 )
 
 # Use balanced 4-class subset labels (4 classes)
 LABELS = BALANCED4_LABELS
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher import ViTTeacher, EfficientNetTeacher
+from src.models.teacher import EfficientNetTeacher, ViTTeacher
 from src.utils.artifacts import run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 
@@ -86,7 +85,7 @@ def collate_fn(batch, sr: int = 16000):
             )
 
         # Remap label from 9-class (0,5,1,7) to 4-class (0,1,2,3)
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             label_9class = int(label_val)
         else:
             from src.data.dreamcatcher_hf import LABEL2ID as LABEL2ID_9CLASS
@@ -194,7 +193,7 @@ def main():
     args = parser.parse_args()
 
     run_name = args.run_name
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
     t_run0 = time.time()
 
     rd = run_dir(run_name)
@@ -277,7 +276,7 @@ def main():
     lat_ms = 0.0
 
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     # Save to leaderboard
     row = {

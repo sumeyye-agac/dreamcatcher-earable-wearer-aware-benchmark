@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from sklearn.metrics import (
     balanced_accuracy_score,
     f1_score,

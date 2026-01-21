@@ -8,8 +8,7 @@ from __future__ import annotations
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
 import numpy as np
 import torch
@@ -19,9 +18,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.data.audio_features import compute_log_mel
-from src.data.dreamcatcher_hf import LABELS, LABEL2ID, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_hf import LABEL2ID, LABELS, load_dreamcatcher_hf_split
 from src.evaluation.metrics import classification_metrics
-from src.models.teacher import ViTTeacher, EfficientNetTeacher
+from src.models.teacher import EfficientNetTeacher, ViTTeacher
 from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import append_to_leaderboard, count_params, estimate_model_size_mb
 from src.utils.reproducibility import set_seed
@@ -74,7 +73,7 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
         if label_val is None:
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             ys.append(int(label_val))
         else:
             label_str = str(label_val)
@@ -185,7 +184,7 @@ def main():
 
     args = parser.parse_args()
     t_run0 = time.time()
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     set_seed(args.seed)
 
@@ -374,7 +373,7 @@ def main():
     param_count = count_params(model)
     model_size_mb = estimate_model_size_mb(model)
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     # Save to leaderboard
     row = {

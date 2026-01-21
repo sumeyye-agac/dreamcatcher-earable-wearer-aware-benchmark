@@ -1,5 +1,5 @@
-import torch
 import torch.nn as nn
+
 from src.models.attention.cbam_audio import CBAM
 
 

@@ -3,27 +3,27 @@ from __future__ import annotations
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix
+from torch.utils.data import DataLoader
 
-from src.data.dreamcatcher_hf import DreamCatcherHFAudioDataset, DreamCatcherHFAudioConfig, LABELS
+from src.data.dreamcatcher_hf import LABELS, DreamCatcherHFAudioConfig, DreamCatcherHFAudioDataset
 from src.evaluation.metrics import classification_metrics
-from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
-from src.utils.reproducibility import set_seed
+from src.models.tinycnn import TinyCNN
+from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import (
+    append_to_leaderboard,
     count_params,
     estimate_model_size_mb,
     measure_cpu_latency,
-    append_to_leaderboard,
 )
+from src.utils.reproducibility import set_seed
 from src.utils.runlog import StepLogger
-from src.utils.artifacts import env_snapshot, run_dir, write_json
 
 
 def collate_fn(batch):
@@ -185,7 +185,7 @@ def main():
 
     args = parser.parse_args()
     t_run0 = time.time()
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     if args.run_name:
         run_name = args.run_name
@@ -199,7 +199,7 @@ def main():
     write_json(rd / "env.json", env_snapshot())
 
     print(f"\n{'=' * 60}")
-    print(f"Starting Training")
+    print("Starting Training")
     print(f"  Model: {args.model}")
     print(f"  Run Name: {run_name}")
     print(f"  Epochs: {args.epochs}")
@@ -347,7 +347,7 @@ def main():
     model_size_mb = estimate_model_size_mb(model)
     lat_ms = measure_cpu_latency(model, input_shape=(1, 1, args.n_mels, args.latency_T))
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     row = {
         "run_started_at_utc": run_started_at_utc,

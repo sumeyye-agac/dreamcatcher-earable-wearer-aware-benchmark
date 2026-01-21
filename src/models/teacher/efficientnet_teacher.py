@@ -6,7 +6,7 @@ Lightweight and efficient vision model for spectrograms.
 import numpy as np
 import torch
 import torch.nn as nn
-from transformers import EfficientNetModel, EfficientNetImageProcessor
+from transformers import EfficientNetImageProcessor, EfficientNetModel
 
 
 class EfficientNetTeacher(nn.Module):

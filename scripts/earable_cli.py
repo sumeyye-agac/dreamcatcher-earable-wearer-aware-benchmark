@@ -5,8 +5,8 @@ import itertools
 import json
 import subprocess
 import sys
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 

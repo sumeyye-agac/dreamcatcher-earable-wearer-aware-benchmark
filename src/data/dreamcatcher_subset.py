@@ -6,14 +6,12 @@ Provides respiratory events subset (breathe, cough, snore).
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 
-from .dreamcatcher_hf import DreamCatcherHFAudioDataset, DreamCatcherHFAudioConfig
+from .dreamcatcher_hf import DreamCatcherHFAudioConfig, DreamCatcherHFAudioDataset
 
 # Respiratory events subset configuration (3-class)
 RESPIRATORY_LABELS = ["breathe", "cough", "snore"]
@@ -55,7 +53,7 @@ class DreamCatcherRespiratorySubset:
         self.run_name = run_name
 
         print(f"\n{'=' * 60}", file=sys.stderr)
-        print(f"Loading Respiratory Subset (breathe, cough, snore)", file=sys.stderr)
+        print("Loading Respiratory Subset (breathe, cough, snore)", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
         print(f"{'=' * 60}\n", file=sys.stderr)
@@ -97,7 +95,7 @@ class DreamCatcherRespiratorySubset:
         # Try to load from cache
         if cache_path.exists():
             try:
-                with open(cache_path, "r") as f:
+                with open(cache_path) as f:
                     cached = json.load(f)
                 print(f"  Loaded cached indices from {cache_path}", file=sys.stderr)
                 return cached["indices"]
@@ -152,7 +150,7 @@ class DreamCatcherRespiratorySubset:
     def __len__(self) -> int:
         return len(self.indices)
 
-    def __getitem__(self, idx: int) -> Tuple[np.ndarray, int]:
+    def __getitem__(self, idx: int) -> tuple[np.ndarray, int]:
         """Get sample and remap label from 9-class to 3-class space."""
         # Get sample from full dataset at filtered index
         full_idx = self.indices[idx]
@@ -186,7 +184,6 @@ def load_respiratory_hf_split(
     Use this for KD training where teacher expects 9-class logits.
     """
     from .dreamcatcher_hf import load_dreamcatcher_hf_split
-    import os
 
     # Load full dataset
     full_ds = load_dreamcatcher_hf_split(
@@ -240,8 +237,8 @@ class DreamCatcherBalanced4Subset:
         self.run_name = run_name
 
         print(f"\n{'=' * 60}", file=sys.stderr)
-        print(f"Loading Balanced 4-Class Subset", file=sys.stderr)
-        print(f"  Classes: quiet, breathe, non_wearer, snore", file=sys.stderr)
+        print("Loading Balanced 4-Class Subset", file=sys.stderr)
+        print("  Classes: quiet, breathe, non_wearer, snore", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
         print(f"{'=' * 60}\n", file=sys.stderr)
@@ -283,7 +280,7 @@ class DreamCatcherBalanced4Subset:
         # Try to load from cache
         if cache_path.exists():
             try:
-                with open(cache_path, "r") as f:
+                with open(cache_path) as f:
                     cached = json.load(f)
                 print(f"  Loaded cached indices from {cache_path}", file=sys.stderr)
                 return cached["indices"]
@@ -336,7 +333,7 @@ class DreamCatcherBalanced4Subset:
     def __len__(self) -> int:
         return len(self.indices)
 
-    def __getitem__(self, idx: int) -> Tuple[np.ndarray, int]:
+    def __getitem__(self, idx: int) -> tuple[np.ndarray, int]:
         """Get sample and remap label from 9-class to 4-class space."""
         full_idx = self.indices[idx]
         x, y_full = self.full_ds[full_idx]

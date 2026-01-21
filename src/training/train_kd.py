@@ -2,28 +2,29 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import UTC, datetime
+
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from datetime import datetime, timezone
 from sklearn.metrics import confusion_matrix
+from torch.utils.data import DataLoader
 
 from src.data.audio_features import compute_log_mel
-from src.data.dreamcatcher_hf import LABELS, LABEL2ID, load_dreamcatcher_hf_split
+from src.data.dreamcatcher_hf import LABEL2ID, LABELS, load_dreamcatcher_hf_split
 from src.evaluation.metrics import classification_metrics
-from src.models.tinycnn import TinyCNN
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
-from src.models.teacher import ViTTeacher, EfficientNetTeacher
-from src.utils.reproducibility import set_seed
+from src.models.teacher import EfficientNetTeacher, ViTTeacher
+from src.models.tinycnn import TinyCNN
+from src.utils.artifacts import env_snapshot, run_dir, write_json
 from src.utils.benchmarking import (
+    append_to_leaderboard,
     count_params,
     estimate_model_size_mb,
     measure_cpu_latency,
-    append_to_leaderboard,
 )
-from src.utils.artifacts import env_snapshot, run_dir, write_json
+from src.utils.reproducibility import set_seed
 
 
 def make_student(model_name: str, n_classes: int, args) -> torch.nn.Module:
@@ -94,7 +95,7 @@ def collate_fn(batch, n_mels: int = 64, sr: int = 16000):
         if label_val is None:
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             ys.append(int(label_val))
         else:
             label_str = str(label_val)
@@ -256,7 +257,7 @@ def main():
     import time
 
     t_run0 = time.time()
-    run_started_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_started_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     set_seed(args.seed)
     torch.manual_seed(args.seed)
@@ -417,7 +418,7 @@ def main():
     model_size_mb = estimate_model_size_mb(student)
     lat_ms = measure_cpu_latency(student, input_shape=(1, 1, args.n_mels, args.latency_T))
     wall_time_s = time.time() - t_run0
-    run_finished_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_finished_at_utc = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     row = {
         "run_started_at_utc": run_started_at_utc,

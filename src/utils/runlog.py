@@ -6,7 +6,6 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 def _now_iso() -> str:
@@ -25,7 +24,7 @@ class StepLogger:
     run_name: str
     csv_path: str = "results/run_steps.csv"
 
-    def log(self, stage: str, detail: str = "", t0: Optional[float] = None) -> None:
+    def log(self, stage: str, detail: str = "", t0: float | None = None) -> None:
         os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
 
         dt_s: str = ""

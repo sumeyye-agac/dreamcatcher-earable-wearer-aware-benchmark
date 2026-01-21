@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Tuple
-import sys
 import os
 import shutil
-import time
+import sys
 import threading
+import time
+from dataclasses import dataclass
 
 import numpy as np
 from datasets import DownloadConfig, load_dataset_builder
 from huggingface_hub import get_token
 
-from .audio_features import compute_log_mel
 from src.utils.runlog import StepLogger
+
+from .audio_features import compute_log_mel
 
 # DreamCatcher HF config uses 9 labels for sleep_event_classification.
 LABELS = [
@@ -211,10 +211,10 @@ class DreamCatcherHFAudioDataset:
         self._logger = StepLogger(run_name=run_name, csv_path=steps_csv)
 
         print(f"\n{'=' * 60}", file=sys.stderr)
-        print(f"Loading DreamCatcher Dataset", file=sys.stderr)
+        print("Loading DreamCatcher Dataset", file=sys.stderr)
         print(f"  Split: {split}", file=sys.stderr)
-        print(f"  Config: sleep_event_classification", file=sys.stderr)
-        print(f"  Source: THU-PI-Sensing/DreamCatcher (HuggingFace)", file=sys.stderr)
+        print("  Config: sleep_event_classification", file=sys.stderr)
+        print("  Source: THU-PI-Sensing/DreamCatcher (HuggingFace)", file=sys.stderr)
         print(f"  Dataset Mode: {dataset_mode}", file=sys.stderr)
         if run_name:
             print(f"  Run Name: {run_name}", file=sys.stderr)
@@ -252,7 +252,7 @@ class DreamCatcherHFAudioDataset:
     def __len__(self) -> int:
         return len(self.ds)
 
-    def __getitem__(self, idx: int) -> Tuple[np.ndarray, int]:
+    def __getitem__(self, idx: int) -> tuple[np.ndarray, int]:
         def _load_row_audio(i: int):
             row0 = self.ds[i]
             if "audio" in row0:
@@ -339,7 +339,7 @@ class DreamCatcherHFAudioDataset:
         else:
             raise KeyError("Expected 'label' (or 'event_label'/'class') in dataset row.")
 
-        if isinstance(label_val, (int, np.integer)):
+        if isinstance(label_val, int | np.integer):
             y_id = int(label_val)
         else:
             label_str = str(label_val)
