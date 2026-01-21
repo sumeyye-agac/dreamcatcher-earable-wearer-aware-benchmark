@@ -88,28 +88,32 @@ def suite_audio_benchmark(args: argparse.Namespace) -> None:
         ("crnn_cbam", ["--rnn_hidden", "64", "--rnn_layers", "1", "--cbam_reduction", "8", "--cbam_sa_kernel", "7"]),
     ]:
         run_name = f"{model}_baseline"
-        _run(
-            [
-                sys.executable,
-                "-m",
-                "src.training.train_baseline",
-                "--model",
-                model,
-                "--dataset_mode",
-                "full",
-                "--invalid_audio_policy",
-                "skip",
-                "--epochs",
-                str(args.epochs),
-                "--batch_size",
-                str(args.batch_size),
-                "--lr",
-                str(args.lr),
-                "--run_name",
-                run_name,
-                *extra,
-            ]
-        )
+        cmd = [
+            sys.executable,
+            "-m",
+            "src.training.train_baseline",
+            "--model",
+            model,
+            "--dataset_mode",
+            "full",
+            "--invalid_audio_policy",
+            "skip",
+            "--epochs",
+            str(args.epochs),
+            "--batch_size",
+            str(args.batch_size),
+            "--lr",
+            str(args.lr),
+            "--run_name",
+            run_name,
+            *extra,
+        ]
+        # Add early stopping parameters if provided
+        if hasattr(args, 'early_stop_patience') and args.early_stop_patience:
+            cmd.extend(["--early_stop_patience", str(args.early_stop_patience)])
+        if hasattr(args, 'early_stop_min_delta') and args.early_stop_min_delta:
+            cmd.extend(["--early_stop_min_delta", str(args.early_stop_min_delta)])
+        _run(cmd)
 
 
 def suite_kd_smoke(args: argparse.Namespace) -> None:
@@ -368,6 +372,8 @@ def main(argv: list[str] | None = None) -> int:
     p_suite.add_argument("--epochs", type=int, default=1)
     p_suite.add_argument("--batch_size", type=int, default=8)
     p_suite.add_argument("--lr", type=float, default=1e-3)
+    p_suite.add_argument("--early_stop_patience", type=int, default=0, help="Early stopping patience (0=disabled)")
+    p_suite.add_argument("--early_stop_min_delta", type=float, default=0.0, help="Minimum improvement threshold")
     p_suite.add_argument(
         "--max_samples",
         type=int,
