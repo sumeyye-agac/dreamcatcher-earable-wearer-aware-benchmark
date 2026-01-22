@@ -17,9 +17,8 @@ from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data.audio_features import compute_log_mel
-from src.data.dreamcatcher_hf import DreamCatcherHFAudioConfig
-from src.data.dreamcatcher_subset import BALANCED4_LABELS, DreamCatcherBalanced4Subset
+from src.data.balanced4_cached import CachedBalanced4Dataset
+from src.data.dreamcatcher_subset import BALANCED4_LABELS
 from src.evaluation.metrics import classification_metrics
 from src.models.teacher import EfficientNetTeacher
 from src.utils.artifacts import env_snapshot, run_dir, write_json
@@ -178,37 +177,12 @@ def main():
     print(f"Freeze encoder: {args.freeze_encoder}")
     print(f"{'=' * 60}\n")
 
-    # Load balanced 4-class datasets
-    print("Loading datasets...")
-    cfg = DreamCatcherHFAudioConfig(
-        sample_rate=args.sr,
-        n_mels=args.n_mels,
-        invalid_audio_policy="pad",
-    )
-    train_ds = DreamCatcherBalanced4Subset(
-        split="train",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
-        run_name=args.run_name,
-        steps_csv=args.steps_csv,
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
-    val_ds = DreamCatcherBalanced4Subset(
-        split="validation",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
-        run_name=args.run_name,
-        steps_csv=args.steps_csv,
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
-    test_ds = DreamCatcherBalanced4Subset(
-        split="test",
-        cfg=cfg,
-        dataset_mode=args.dataset_mode,
-        run_name=args.run_name,
-        steps_csv=args.steps_csv,
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
+    # Load cached 4-class datasets
+    print("Loading cached datasets...")
+    max_samples = args.max_samples if args.max_samples else 0
+    train_ds = CachedBalanced4Dataset(split="train", max_samples=max_samples)
+    val_ds = CachedBalanced4Dataset(split="validation", max_samples=max_samples)
+    test_ds = CachedBalanced4Dataset(split="test", max_samples=max_samples)
 
     print(f"Train: {len(train_ds)}, Val: {len(val_ds)}, Test: {len(test_ds)}")
 
