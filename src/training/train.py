@@ -338,7 +338,7 @@ def main():
         "run_started_at_utc": run_started_at_utc,
         "run_finished_at_utc": run_finished_at_utc,
         "run_name": run_name,
-        "task": "balanced4_audio_event",
+        "task": "sleep_event_classification",
         "model": args.model,
         "teacher": "",
         "seed": args.seed,
