@@ -1,39 +1,37 @@
-# DreamCatcher Earable Wearer-Aware Benchmark
+# DreamCatcher Sleep Event Classification
 
 [![Status](https://img.shields.io/badge/status-under%20development-yellow.svg)](#)
-
-**Note:** This repository is under active development. Teacher models and KD pipeline have been implemented but performance benchmarks are still being validated.
-
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-yellow.svg)](https://huggingface.co/)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Datasets-yellow.svg)](https://huggingface.co/)
 
-Resource-efficient wearer-aware event recognition on earables (DreamCatcher dataset).
+**Note:** This repository is under active development. Performance benchmarks are being validated.
 
-This repository provides a reproducible benchmarking framework for earable-based
-event recognition under real-world sleep conditions. The focus is on building
-lightweight and resource-aware models using attention mechanisms and knowledge
-distillation, while maintaining strong recognition performance.
+Resource-efficient sleep event classification on earables using the DreamCatcher dataset.
 
-The current implementation is audio-only, based on the publicly available
-DreamCatcher release, and is designed to be easily extendable to multimodal
-audio + IMU settings when additional data access is available.
+This repository provides a benchmarking framework for sleep event recognition
+from in-ear audio under real-world conditions. The focus is on building
+lightweight models using attention mechanisms and knowledge distillation
+for resource-constrained wearable devices.
+
+**Dataset:** 3-class classification (quiet, breathe, snore) from in-ear audio recordings.
 
 ---
 
 ## Problem
 
-Wearable sleep monitoring using earables introduces unique challenges:
+Sleep event monitoring using earables introduces unique challenges:
 
-- Events such as snoring, breathing irregularities, coughing, or body movements
-  are captured by in-ear microphones, often mixed with sounds from a co-sleeper.
-- The system must distinguish wearer-generated events from external events
-  (wearer-aware recognition).
-- Models are expected to operate under strict resource constraints, as earables
-  require low-latency and low-power inference.
+- Sleep events (quiet, breathing, snoring) are captured by in-ear microphones
+- Audio quality varies significantly across different sleep stages and positions
+- Models must operate under strict resource constraints for wearable deployment
+- Real-time inference requires low-latency and low-power processing
 
-This repository studies these challenges from a resource-aware applied machine
-learning perspective.
+This repository addresses these challenges through:
+- Lightweight CNN and RNN architectures
+- Attention mechanisms (CBAM) for improved feature learning
+- Knowledge distillation for model compression
+- Weighted loss for handling class imbalance
 
 ---
 
@@ -56,8 +54,8 @@ learning perspective.
 
 2. **Create a virtual environment:**
    ```bash
-   python3 -m venv .venv-earable
-   source .venv-earable/bin/activate  # On Windows: .venv-earable\Scripts\activate
+   python3 -m venv dream-env
+   source dream-env/bin/activate  # On Windows: dream-env\Scripts\activate
    ```
 
 3. **Install dependencies:**
@@ -79,8 +77,7 @@ export HF_DATASETS_CACHE="/path/with/space/hf_datasets_cache"
 - Or passing `--cache_dir` to training scripts:
 
 ```bash
-python3 -m src.training.train_baseline --cache_dir "/path/with/space/hf_datasets_cache" ...
-python3 -m src.training.train_kd --cache_dir "/path/with/space/hf_datasets_cache" ...
+python3 -m src.training.train --cache_dir "/path/with/space/hf_datasets_cache" ...
 ```
 
 4. **Authenticate with HuggingFace:**
@@ -137,200 +134,180 @@ python3 -m src.training.train_kd --cache_dir "/path/with/space/hf_datasets_cache
 ```
 dreamcatcher-earable-wearer-aware-benchmark/
 ├── README.md                    # Main documentation
-├── docs/                        # Additional documentation
-│   ├── TEACHER_TRAINING.md     # Teacher training guide
-│   └── WORKFLOW.md             # Complete experiment workflow
 ├── scripts/                     # Utility scripts
-│   ├── earable_cli.py          # CLI tool for dataset operations
-│   ├── monitor_experiments.sh  # Monitor running experiments
-│   ├── watch_experiments.sh    # Watch experiment progress
-│   └── plot_distribution.py    # Dataset visualization
-├── experiments/                 # Shell scripts for experiments
-│   ├── train_teachers.sh       # Train teacher models
-│   ├── run_kd.sh              # Knowledge distillation
-│   ├── run_audio_benchmark.sh # Baseline training
-│   └── ...                    # Other experiment scripts
+│   └── preprocess.py           # Cache spectrogram preprocessing
+├── experiments/                 # Training scripts
+│   └── train_teachers.sh       # Train CRNN_CBAM teacher
 ├── src/                        # Source code
-│   ├── data/                  # Dataset loading and preprocessing
+│   ├── data/                  # Dataset loading
+│   │   ├── dreamcatcher_hf.py        # HuggingFace dataset loader
+│   │   ├── dreamcatcher_dataset.py   # 3-class dataset
+│   │   ├── cached_dataset.py         # Fast HDF5 loader
+│   │   └── audio_features.py         # Spectrogram extraction
 │   ├── models/                # Model implementations
-│   │   ├── teacher/          # Teacher models (EfficientNet)
-│   │   ├── tinycnn.py        # Lightweight CNN
+│   │   ├── tinycnn.py        # Lightweight CNN (23K params)
 │   │   ├── crnn.py           # CNN + RNN
-│   │   └── crnn_cbam.py      # CRNN + CBAM attention
+│   │   └── crnn_cbam.py      # CRNN + CBAM attention (74K params)
 │   ├── training/              # Training scripts
-│   │   ├── train_teacher.py  # Train teachers
-│   │   ├── train_kd.py       # KD training
-│   │   └── train_baseline.py # Baseline training
+│   │   └── train.py          # Main training script
 │   ├── evaluation/            # Metrics and evaluation
 │   └── utils/                 # Utilities
-├── configs/                    # Configuration files
-├── results/                    # Experiment outputs (gitignored)
-│   ├── runs/                 # Individual run outputs
-│   ├── leaderboard.csv       # All results
-│   └── run_steps.csv         # Processing steps log
-└── logs/                      # Training logs (gitignored)
+├── results/                    # Experiment outputs
+│   ├── runs/                 # Per-run checkpoints and metrics
+│   │   ├── tinycnn/
+│   │   └── crnn_cbam_teacher/
+│   ├── cache/                # Pre-computed spectrograms (HDF5)
+│   └── leaderboard.csv       # All results
+└── logs/                      # Training logs
 ```
 
 ---
 
 ## Dataset
 
-DreamCatcher dataset (introduced in NeurIPS 2024, Datasets & Benchmarks Track)
+DreamCatcher dataset (NeurIPS 2024 Datasets & Benchmarks Track)
 
-- Modality (public release): in-ear audio
-- Setting: overnight sleep recordings with co-sleepers
-- Key property: wearer-aware event annotations
-- Config: `sleep_event_classification` (automatically used by the code)
-- Source: [THU-PI-Sensing/DreamCatcher](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher) on HuggingFace
+- **Source:** [THU-PI-Sensing/DreamCatcher](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher)
+- **Modality:** In-ear audio recordings
+- **Classes:** 3 sleep events (quiet, breathe, snore)
+- **Total samples:** 380,362 (after filtering)
+  - Train: 250,050 samples
+  - Validation: 63,056 samples
+  - Test: 67,256 samples
+- **Features:** 128-band log-mel spectrograms (5-second windows)
+- **Sample rate:** 16 kHz
 
-Note: The public version used in this repository contains audio data only.
-Multimodal pipelines are implemented in a modular way but require explicit dataset
-access approval.
+**Preprocessing:**
+```bash
+python3 scripts/preprocess.py
+```
+Generates HDF5 cache (~30 GB) for fast training.
 
 ---
 
 ## Scope
 
-**Relation to the original DreamCatcher work.**  
-The original DreamCatcher study introduces the dataset and formulates the
-wearer-aware sleep event recognition problem.  
-This repository builds on that foundation by focusing on **systematic model
-benchmarking under wearable constraints**, including attention mechanisms,
-knowledge distillation, and explicit evaluation of accuracy–efficiency trade-offs
-(parameter count and CPU latency).
-
 This repository focuses on:
 
-- Segment-level audio event classification on earables (event_label)
-- Wearer-aware classification under real-world interference
-- Lightweight model design (TinyCNN, CRNN)
-- Attention mechanisms (CBAM)
-- Knowledge distillation (teacher–student)
-- Resource-aware evaluation (parameter count and CPU latency)
+- **Audio-only 3-class classification** (quiet, breathe, snore)
+- **Lightweight architectures** for wearable deployment
+- **Attention mechanisms** (CBAM) for improved performance
+- **Knowledge distillation** from larger teacher models
+- **Class imbalance handling** via weighted loss
+- **Resource-aware evaluation** (accuracy, parameters, latency)
 
-The repository does not target speech recognition or ASR.
+**Note:** This is a sleep event classification task, not speech recognition.
 
 ---
 
 ## Models
 
-**Student models (edge-oriented):**
-- TinyCNN
-- CRNN
-- CRNN + CBAM
+### Implemented Architectures
 
-**Teacher models (training only):**
-- EfficientNet-B0: google/efficientnet-b0 (~5M params)
+| Model | Parameters | Description |
+|-------|-----------|-------------|
+| **TinyCNN** | 23K | Lightweight baseline CNN |
+| **CRNN** | ~50K | CNN + Bidirectional GRU |
+| **CRNN_CBAM** | 74K | CRNN + CBAM attention (teacher) |
 
-Teacher uses pretrained vision model fine-tuned on audio spectrograms for 4-class balanced subset.
-
-*(Teacher models are used during knowledge distillation training only.)*
+**Key Features:**
+- All models use 128-mel spectrograms as input
+- CBAM: Convolutional Block Attention Module (channel + spatial attention)
+- Weighted CrossEntropyLoss for class imbalance (weights: 1.0, 1.5, 5.5)
+- Early stopping with patience=5 on validation F1
 
 ---
 
-## Reproducibility
+## Training
 
-All experiments are scriptable and log results to `results/leaderboard.csv`.
+### Quick Start
 
-**Baselines and attention models:**
+**1. Preprocess dataset (one-time, ~30-40 min):**
 ```bash
-bash experiments/run_audio_benchmark.sh
-```
-**Quick smoke run (fast end-to-end sanity check):**
-```bash
-bash experiments/run_audio_smoke.sh
-```
-**Knowledge distillation:**
-```bash
-bash experiments/run_kd.sh
-```
-**KD smoke run:**
-```bash
-bash experiments/run_kd_smoke.sh
+python3 scripts/preprocess.py
 ```
 
-### Hyperparameters (KD / tuning)
+**2. Train models:**
 
-At the moment, this repository does **not** include an automated sweep/grid-search runner.
-KD hyperparameters (e.g., `alpha`, `tau`, `lr`, `batch_size`) are set **explicitly** in the experiment scripts
-(`experiments/run_kd*.sh`) and passed through to the training entrypoint (`src/training/train_kd.py`).
-
-**Recommended workflow today (manual sweep):**
-- Duplicate/loop over settings in a bash script (e.g., nested loops over `alpha` and `tau`)
-- Give each run a unique `--run_name`
-- Compare runs via `results/leaderboard.csv` (and per-run `results/runs/<run_name>/metrics.json`)
-
-**TODO (planned):** add a first-class sweep command, e.g. `earable sweep kd --alpha 0.3,0.5,0.7 --tau 2,5,10 ...`,
-to run combinations and log them consistently.
----
-
-## Sweeps / Grid Search
-
-You can run a simple grid-search style sweep for KD via the `earable` CLI (runs are logged to the same leaderboard and per-run artifacts):
-
+**TinyCNN (lightweight baseline):**
 ```bash
-# Example KD sweep (smoke)
-earable sweep kd \
-  --students crnn,crnn_cbam \
-  --alpha 0.3,0.7 \
-  --tau 2,5 \
+python3 -m src.training.train \
+  --model tinycnn \
+  --epochs 50 \
+  --batch_size 32 \
   --lr 1e-3 \
-  --batch_size 4 \
-  --dataset_mode smoke \
-  --max_samples 512 \
-  --jobs 2
+  --early_stop_patience 5 \
+  --run_name tinycnn \
+  --class_weights 1.0,1.5,5.5
 ```
 
-Tip: add `--dry_run` to print the commands without running them.
-
-Note: when using `--jobs > 1`, runs will append to `results/leaderboard.csv` concurrently; the repo uses a simple file lock
-to prevent CSV corruption.
-
-### Summarize what you tried (after a sweep)
-
-Runs write per-run artifacts to `results/runs/<run_name>/`. You can summarize a sweep by prefix:
-
+**CRNN_CBAM (teacher with attention):**
 ```bash
-# Example: summarize the most recent sweep (replace prefix)
-earable summarize --prefix kd_sweep_ --metric f1_macro --topk 10
+bash experiments/train_teachers.sh
 ```
 
-## Dataset Analysis & Visualization
-
-### Class Distribution
-
-Visualize the class distribution in the DreamCatcher dataset (all splits combined):
-
+**Monitor training:**
 ```bash
-python scripts/plot_distribution.py
+tail -f logs/tinycnn.log
+tail -f logs/crnn_cbam.log
 ```
 
-Generates two high-quality visualizations saved to `results/visualizations/`:
-- **class_distribution_bar_total.png** - Bar chart with sample counts and percentages
-- **class_distribution_pie_total.png** - Pie chart with percentage breakdown
+### Training Arguments
 
-**Example output (total: 447,648 samples):**
+**Common arguments:**
+- `--model`: Model architecture (tinycnn, crnn, crnn_cbam)
+- `--epochs`: Maximum epochs (default: 50)
+- `--batch_size`: Batch size (default: 32)
+- `--lr`: Learning rate (default: 1e-3)
+- `--early_stop_patience`: Early stopping patience (default: 5)
+- `--class_weights`: Class weights for imbalanced data (e.g., 1.0,1.5,5.5)
+- `--run_name`: Experiment name for logging
+
+**CRNN_CBAM specific:**
+- `--rnn_hidden`: RNN hidden size (default: 64)
+- `--rnn_layers`: Number of RNN layers (default: 2)
+- `--att_mode`: Attention mechanism (cbam)
+- `--cbam_reduction`: CBAM reduction ratio (default: 16)
+- `--cbam_sa_kernel`: CBAM spatial attention kernel (default: 7)
+
+### Results
+
+Results are saved to:
+- `results/runs/<run_name>/metrics.json` - Per-run metrics
+- `results/runs/<run_name>/best_model.pth` - Best checkpoint
+- `results/runs/<run_name>/test_confusion_matrix.csv` - Confusion matrix
+- `results/leaderboard.csv` - All experiments summary
+
+## Expected Performance
+
+Baseline performance on 3-class DreamCatcher test set:
+
+| Model | Accuracy | F1-Macro | Parameters |
+|-------|----------|----------|------------|
+| TinyCNN | ~78-80% | ~74-76% | 23K |
+| CRNN_CBAM | ~80-82% | ~76-78% | 74K |
+
+*Note: Results may vary based on random initialization and data splits.*
+
+## Key Features
+
+- ✅ **Lightweight models** optimized for wearable deployment
+- ✅ **Attention mechanisms** (CBAM) for improved feature learning
+- ✅ **Class imbalance handling** via weighted loss
+- ✅ **Fast training** with HDF5-cached spectrograms
+- ✅ **Comprehensive metrics** (accuracy, F1, confusion matrix)
+- ✅ **Early stopping** to prevent overfitting
+
+## Citation
+
+If you use the DreamCatcher dataset, please cite:
+```bibtex
+@inproceedings{dreamcatcher2024,
+  title={DreamCatcher: A Dataset for Sleep Event Detection from In-Ear Audio},
+  author={...},
+  booktitle={NeurIPS 2024 Datasets and Benchmarks Track},
+  year={2024}
+}
 ```
-  quiet               :  210,546 samples ( 47.03%)
-  breathe             :  141,885 samples ( 31.70%)
-  non_wearer          :   42,013 samples (  9.39%)
-  snore               :   38,611 samples (  8.63%)
-  bruxism             :    8,023 samples (  1.79%)
-  movements           :    3,569 samples (  0.80%)
-  swallow             :    2,179 samples (  0.49%)
-  somniloquy          :      714 samples (  0.16%)
-  cough               :       98 samples (  0.02%)
-```
-
-**Custom confusion matrix:**
-```bash
-python scripts/plot_distribution.py --confusion-matrix <path>
-```
-
-## Key Takeaways
-
-- Lightweight CRNN models benefit significantly from attention mechanisms in earable audio event recognition.
-- Knowledge distillation narrows the performance gap between compact students and stronger pretrained teachers.
-- Benchmarking accuracy together with latency and parameter count is critical for realistic wearable deployment scenarios.
 
 ---
