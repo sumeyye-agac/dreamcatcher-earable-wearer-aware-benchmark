@@ -8,25 +8,30 @@ source dream-env/bin/activate
 mkdir -p logs
 
 echo "========================================"
-echo "Training EfficientNet Teacher (4-class)"
+echo "Training CRNN_CBAM Teacher (3-class)"
 echo "========================================"
 echo ""
 
-python3 -m src.training.train_teacher \
-  --teacher_type efficientnet \
-  --epochs 30 \
+python3 -m src.training.train \
+  --model crnn_cbam \
+  --epochs 50 \
   --batch_size 32 \
-  --lr 1e-4 \
+  --lr 1e-3 \
   --early_stop_patience 5 \
-  --early_stop_min_delta 0.0005 \
-  --run_name efficientnet_teacher_4class \
-  2>&1 | tee logs/efficientnet_teacher.log
+  --run_name crnn_cbam_teacher \
+  --class_weights 1.0,1.5,5.5 \
+  --rnn_hidden 64 \
+  --rnn_layers 2 \
+  --att_mode cbam \
+  --cbam_reduction 16 \
+  --cbam_sa_kernel 7 \
+  2>&1 | tee logs/crnn_cbam_teacher.log
 
 echo ""
 echo "========================================"
 echo "Teacher training complete"
 echo "========================================"
 echo ""
-echo "Checkpoint: results/runs/efficientnet_teacher_4class/teacher_checkpoint.pth"
+echo "Checkpoint: results/runs/crnn_cbam_teacher/best_model.pth"
 echo ""
 echo "Use this checkpoint for knowledge distillation experiments."

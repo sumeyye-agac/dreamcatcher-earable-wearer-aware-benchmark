@@ -1,6 +1,5 @@
 """
-Pre-compute and cache spectrograms for Balanced4 dataset.
-This significantly speeds up training by avoiding repeated audio processing.
+Pre-compute and cache spectrograms for DreamCatcher dataset (quiet, breathe, snore).
 """
 
 import sys
@@ -11,22 +10,23 @@ import numpy as np
 from tqdm import tqdm
 
 from src.data.dreamcatcher_hf import DreamCatcherHFAudioConfig
-from src.data.dreamcatcher_subset import DreamCatcherBalanced4Subset
+from src.data.dreamcatcher_dataset import DreamCatcherDataset
 
 
 def preprocess_split(split: str, output_dir: Path):
     """Pre-compute spectrograms for one split and save to HDF5."""
     print(f"\n{'=' * 60}")
-    print(f"Pre-processing {split} split")
+    print(f"Pre-processing {split} split (3-class)")
     print(f"{'=' * 60}\n")
 
     # Load dataset
     cfg = DreamCatcherHFAudioConfig(
         sample_rate=16000,
-        n_mels=64,
+        n_mels=128,
+        clip_seconds=5.0,
         invalid_audio_policy="pad",
     )
-    dataset = DreamCatcherBalanced4Subset(
+    dataset = DreamCatcherDataset(
         split=split,
         cfg=cfg,
         dataset_mode="full",
@@ -52,16 +52,16 @@ def preprocess_split(split: str, output_dir: Path):
     print(f"Using max_time = {max_time} for all spectrograms")
 
     # Create HDF5 file
-    output_file = output_dir / f"balanced4_{split}.h5"
+    output_file = output_dir / f"{split}.h5"
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     with h5py.File(output_file, "w") as f:
         # Create datasets
         spectrograms = f.create_dataset(
             "spectrograms",
-            shape=(n_samples, 64, max_time),
+            shape=(n_samples, 128, max_time),
             dtype=np.float32,
-            chunks=(1, 64, max_time),
+            chunks=(1, 128, max_time),
             compression="gzip",
             compression_opts=4,
         )
@@ -78,7 +78,7 @@ def preprocess_split(split: str, output_dir: Path):
 
             # Pad or truncate to max_time
             if spec.shape[1] < max_time:
-                padded = np.zeros((64, max_time), dtype=np.float32)
+                padded = np.zeros((128, max_time), dtype=np.float32)
                 padded[:, : spec.shape[1]] = spec
                 spec = padded
             elif spec.shape[1] > max_time:
@@ -89,10 +89,12 @@ def preprocess_split(split: str, output_dir: Path):
 
         # Save metadata
         f.attrs["n_samples"] = n_samples
-        f.attrs["n_mels"] = 64
+        f.attrs["n_mels"] = 128
         f.attrs["max_time"] = max_time
         f.attrs["sample_rate"] = 16000
         f.attrs["split"] = split
+        f.attrs["n_classes"] = 3
+        f.attrs["classes"] = "quiet,breathe,snore"
 
     print(f"\n✓ Saved to: {output_file}")
     print(f"  Size: {output_file.stat().st_size / (1024**3):.2f} GB")
@@ -103,7 +105,7 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("\n" + "=" * 60)
-    print("Pre-computing Balanced4 Spectrograms")
+    print("Pre-computing DreamCatcher Spectrograms (quiet, breathe, snore)")
     print("=" * 60)
 
     for split in ["train", "validation", "test"]:

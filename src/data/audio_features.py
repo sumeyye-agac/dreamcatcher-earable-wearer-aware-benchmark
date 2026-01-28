@@ -5,15 +5,21 @@ import numpy as np
 def compute_log_mel(
     y: np.ndarray,
     sr: int,
-    n_mels: int = 64,
-    n_fft: int = 1024,
-    hop_length: int = 256,
-    win_length: int | None = None,
+    n_mels: int = 128,
+    n_fft: int = 512,
+    hop_length: int = 160,
+    win_length: int = 400,
     fmin: int = 20,
     fmax: int | None = None,
 ) -> np.ndarray:
     """
     Compute log-mel spectrogram.
+
+    Default params match DreamCatcher paper (EarVAS config):
+    - 25ms window (400 samples @ 16kHz)
+    - 10ms stride (160 samples @ 16kHz)
+    - 128 mel bins
+
     Returns shape: [n_mels, time]
     """
     if win_length is None:

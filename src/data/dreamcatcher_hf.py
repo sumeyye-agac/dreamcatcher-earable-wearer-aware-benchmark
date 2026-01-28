@@ -180,7 +180,8 @@ def _get_builder(dataset_mode: str, cache_dir: str, logger: StepLogger | None = 
 @dataclass
 class DreamCatcherHFAudioConfig:
     sample_rate: int = 16000
-    n_mels: int = 64
+    n_mels: int = 128
+    clip_seconds: float = 5.0
     # How to handle rare malformed audio buffers:
     # - "skip": never use invalid audio; search nearby indices; error if none found
     # - "resample": like skip, but fall back to silence if still invalid (not recommended for benchmarks)
@@ -269,13 +270,12 @@ class DreamCatcherHFAudioDataset:
 
         # Robustify against rare malformed / empty audio buffers
         if y.ndim == 2:
-            # Common cases:
-            # - (T, C): valid, average channels
-            # - (T, 0) or (0, C): invalid/empty -> treat as empty mono
+            # Audio is stereo with shape (channels, samples) e.g. (2, 15629)
+            # Average across channels (axis=0) to get mono (samples,)
             if y.shape[0] == 0 or y.shape[1] == 0:
                 y = np.zeros((0,), dtype=np.float32)
             else:
-                y = y.mean(axis=1)
+                y = y.mean(axis=0)
 
         def _is_invalid_audio(y1: np.ndarray) -> bool:
             return (y1.size == 0) or (not np.isfinite(y1).all())
@@ -294,7 +294,7 @@ class DreamCatcherHFAudioDataset:
                         if y2.shape[0] == 0 or y2.shape[1] == 0:
                             y2 = np.zeros((0,), dtype=np.float32)
                         else:
-                            y2 = y2.mean(axis=1)
+                            y2 = y2.mean(axis=0)
                     if not _is_invalid_audio(y2):
                         self._logger.log("invalid_audio_resampled", detail=f"idx={idx} -> {j}")
                         y, sr, row = y2, sr2, row2
@@ -324,9 +324,21 @@ class DreamCatcherHFAudioDataset:
 
             y = librosa.resample(y, orig_sr=sr, target_sr=self.cfg.sample_rate)
 
+        # Standardize waveform length to a fixed clip (critical for stable training)
+        # DreamCatcher paper uses 5s clips for event classification benchmarks.
+        clip_s = float(getattr(self.cfg, "clip_seconds", 5.0))
+        target_len = int(self.cfg.sample_rate * clip_s)
+
         # Avoid librosa warnings / degenerate spectrograms for extremely short clips
         if y.shape[0] < 1024:
             y = np.pad(y, (0, 1024 - y.shape[0]), mode="constant")
+
+        # Enforce fixed length (pad/crop)
+        if y.shape[0] < target_len:
+            y = np.pad(y, (0, target_len - y.shape[0]), mode="constant")
+        elif y.shape[0] > target_len:
+            # For now, head-crop. (We can switch to center-crop once pipeline is stable.)
+            y = y[:target_len]
 
         x = compute_log_mel(y=y, sr=self.cfg.sample_rate, n_mels=self.cfg.n_mels)
 

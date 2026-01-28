@@ -9,8 +9,10 @@ import numpy as np
 import torch
 from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from src.data.dreamcatcher_subset import BALANCED4_LABELS as LABELS, DreamCatcherBalanced4Subset
+from src.data.cached_dataset import CachedDataset
+from src.data.dreamcatcher_dataset import CLASS_LABELS as LABELS
 from src.evaluation.metrics import classification_metrics
 from src.models.crnn import CRNN
 from src.models.crnn_cbam import CRNN_CBAM
@@ -72,7 +74,8 @@ def run_one_epoch(model, dl, opt, loss_fn, device):
     total_loss = 0.0
     all_true, all_pred = [], []
 
-    for xb, yb in dl:
+    pbar = tqdm(dl, desc="Training", leave=False)
+    for xb, yb in pbar:
         xb, yb = xb.to(device), yb.to(device)
         logits = model(xb)
         loss = loss_fn(logits, yb)
@@ -86,6 +89,8 @@ def run_one_epoch(model, dl, opt, loss_fn, device):
         all_pred.extend(preds)
         all_true.extend(yb.detach().cpu().numpy().tolist())
 
+        pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+
     avg_loss = total_loss / max(1, len(dl.dataset))
     m = classification_metrics(all_true, all_pred)
     return avg_loss, m
@@ -97,7 +102,8 @@ def evaluate(model, dl, loss_fn, device, *, return_preds: bool = False):
     total_loss = 0.0
     all_true, all_pred = [], []
 
-    for xb, yb in dl:
+    pbar = tqdm(dl, desc="Validating", leave=False)
+    for xb, yb in pbar:
         xb, yb = xb.to(device), yb.to(device)
         logits = model(xb)
         loss = loss_fn(logits, yb)
@@ -182,6 +188,7 @@ def main():
         default=0,
         help="Optional cap per split for faster smoke runs (0 = no cap).",
     )
+    parser.add_argument("--class_weights", type=str, default="", help="Comma-separated class weights (e.g. 1.0,1.5,5.5)")
 
     args = parser.parse_args()
     t_run0 = time.time()
@@ -218,42 +225,12 @@ def main():
     set_seed(args.seed)
     torch.manual_seed(args.seed)
 
-    print("Loading datasets...")
+    print("Loading cached datasets...")
     t_ds = time.time()
     slog.log("load_datasets_start", detail=f"mode={args.dataset_mode}")
-    train_ds = DreamCatcherBalanced4Subset(
-        mode=args.dataset_mode,
-        split="train",
-        sr=args.sr,
-        n_mels=args.n_mels,
-        invalid_audio_policy=args.invalid_audio_policy,
-        run_name=run_name,
-        steps_csv=args.steps_csv,
-        cache_dir=(args.cache_dir or None),
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
-    val_ds = DreamCatcherBalanced4Subset(
-        mode=args.dataset_mode,
-        split="validation",
-        sr=args.sr,
-        n_mels=args.n_mels,
-        invalid_audio_policy=args.invalid_audio_policy,
-        run_name=run_name,
-        steps_csv=args.steps_csv,
-        cache_dir=(args.cache_dir or None),
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
-    test_ds = DreamCatcherBalanced4Subset(
-        mode=args.dataset_mode,
-        split="test",
-        sr=args.sr,
-        n_mels=args.n_mels,
-        invalid_audio_policy=args.invalid_audio_policy,
-        run_name=run_name,
-        steps_csv=args.steps_csv,
-        cache_dir=(args.cache_dir or None),
-        max_samples=args.max_samples if args.max_samples else 0,
-    )
+    train_ds = CachedDataset(split="train")
+    val_ds = CachedDataset(split="validation")
+    test_ds = CachedDataset(split="test")
     print(f"All datasets loaded: train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}\n")
     slog.log(
         "load_datasets_done",
@@ -274,7 +251,14 @@ def main():
     model = make_model(args.model, n_classes=len(LABELS), args=args).to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    loss_fn = torch.nn.CrossEntropyLoss()
+
+    # Weighted loss for class imbalance (quiet=1.0, breathe=1.5, snore=5.5)
+    if hasattr(args, 'class_weights') and args.class_weights:
+        weights = torch.tensor([float(w) for w in args.class_weights.split(',')]).to(device)
+        loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
+        print(f"Using weighted loss: {weights.tolist()}")
+    else:
+        loss_fn = torch.nn.CrossEntropyLoss()
 
     best_val_f1 = -1.0
     best_val_metrics = None
