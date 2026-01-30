@@ -207,14 +207,45 @@ This repository focuses on:
 | Model | Parameters | Description |
 |-------|-----------|-------------|
 | **TinyCNN** | 23K | Lightweight baseline CNN |
-| **CRNN** | ~50K | CNN + Bidirectional GRU |
-| **CRNN_CBAM** | 74K | CRNN + CBAM attention (teacher) |
+| **ExtremeTinyCNN** | 6K | Smaller variant for ultra-low power |
+| **UltraExtremeTinyCNN** | 1.5K | Minimal variant |
+| **CRNN** | 73K | CNN + Bidirectional GRU |
+| **CRNN_CBAM** | 74K | CRNN + CBAM attention |
+| **TinyCNN_CBAM** | 24K | TinyCNN + CBAM variants |
 
 **Key Features:**
 - All models use 128-mel spectrograms as input
 - CBAM: Convolutional Block Attention Module (channel + spatial attention)
 - Weighted CrossEntropyLoss for class imbalance (weights: 1.0, 1.5, 5.5)
 - Early stopping with patience=5 on validation F1
+
+### Model Variants
+
+**Size Variants:**
+- `tinycnn`: Baseline lightweight CNN (23K params)
+- `extremetinycnn`: Smaller variant (6K params)
+- `ultraextremetinycnn`: Minimal variant (1.5K params)
+
+**CBAM Variants:**
+All base models can be combined with CBAM attention using the `_cbam` suffix.
+
+**CBAM Naming Convention:**
+- `rr{X}`: Reduction ratio (channel compression in CBAM)
+  - `rr2`: Low compression (best performance, more parameters)
+  - `rr4`: Medium compression
+  - `rr8`: High compression (fewer parameters, may cause collapse)
+- `sk{X}`: Spatial attention kernel size
+  - `sk3`: Small kernel (works well for TinyCNN)
+  - `sk7`: Medium kernel (standard, works for most models)
+  - `sk11`: Large kernel (works for Ultra variants)
+
+**Example:** `tinycnn_cbam_rr2_sk3` = TinyCNN + CBAM with reduction ratio 2, spatial kernel 3
+
+**Ablation Models:**
+- `crnn_baseline`: Original CRNN (may collapse with default hyperparameters)
+- `crnn_improved`: CRNN with tuned hyperparameters (LR=5e-4, gradient clipping)
+- `crnn_blocks`: CRNN with block structure but no CBAM (control experiment)
+- `crnn_cbam`: CRNN with CBAM attention
 
 ---
 
@@ -269,6 +300,21 @@ tail -f logs/crnn_cbam.log
 - `--att_mode`: Attention mechanism (cbam)
 - `--cbam_reduction`: CBAM reduction ratio (default: 16)
 - `--cbam_sa_kernel`: CBAM spatial attention kernel (default: 7)
+- `--grad_clip`: Gradient clipping value (0 disables, recommended: 1.0 for RNNs)
+
+### Device Tracking
+
+All training runs now track the device used (CPU/CUDA/MPS):
+- Printed at training start
+- Saved in `metrics.json`
+- Recorded in `leaderboard.csv` (device and device_name columns)
+
+Example output:
+```
+============================================================
+DEVICE: mps (Apple MPS GPU)
+============================================================
+```
 
 ### Results
 
@@ -278,16 +324,20 @@ Results are saved to:
 - `results/runs/<run_name>/test_confusion_matrix.csv` - Confusion matrix
 - `results/leaderboard.csv` - All experiments summary
 
-## Expected Performance
+## Results
 
-Baseline performance on 3-class DreamCatcher test set:
+**Status:** 🚧 Evaluation in progress
 
-| Model | Accuracy | F1-Macro | Parameters |
-|-------|----------|----------|------------|
-| TinyCNN | ~78-80% | ~74-76% | 23K |
-| CRNN_CBAM | ~80-82% | ~76-78% | 74K |
+The repository is currently undergoing comprehensive model evaluation including:
+- Baseline models (TinyCNN, CRNN)
+- CBAM ablation studies (various reduction ratios and kernel sizes)
+- Hyperparameter optimization experiments
 
-*Note: Results may vary based on random initialization and data splits.*
+Results will be published in `results/leaderboard.csv` upon completion.
+
+For preliminary results and ongoing experiments, see:
+- `results/leaderboard.csv` - All completed runs
+- `results/runs/<run_name>/metrics.json` - Per-run detailed metrics
 
 ## Key Features
 
