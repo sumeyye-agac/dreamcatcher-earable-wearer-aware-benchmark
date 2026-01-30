@@ -4,7 +4,6 @@ import argparse
 import csv
 import time
 from datetime import UTC, datetime
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -54,6 +53,12 @@ def make_model(model_name: str, n_classes: int, args) -> torch.nn.Module:
     model_name = model_name.lower()
     if model_name == "tinycnn":
         return TinyCNN(n_classes=n_classes)
+    if model_name == "extremetinycnn":
+        from src.models.extreme_tinycnn import ExtremeTinyCNN
+        return ExtremeTinyCNN(n_classes=n_classes)
+    if model_name == "ultraextremetinycnn":
+        from src.models.ultra_extreme_tinycnn import UltraExtremeTinyCNN
+        return UltraExtremeTinyCNN(n_classes=n_classes)
     if model_name == "crnn":
         return CRNN(n_classes=n_classes, rnn_hidden=args.rnn_hidden, rnn_layers=args.rnn_layers)
     if model_name == "crnn_cbam":
@@ -68,7 +73,7 @@ def make_model(model_name: str, n_classes: int, args) -> torch.nn.Module:
             use_ca=use_ca,
             use_sa=use_sa,
         )
-    raise ValueError("Unknown model. Choose from: tinycnn, crnn, crnn_cbam")
+    raise ValueError("Unknown model. Choose from: tinycnn, extremetinycnn, ultraextremetinycnn, crnn, crnn_cbam")
 
 
 def distillation_loss(student_logits, teacher_logits, labels, temperature, alpha):
@@ -258,7 +263,7 @@ def main():
 
     # Student model
     parser.add_argument("--student_model", type=str, default="tinycnn",
-                        help="Student model (tinycnn, crnn)")
+                        help="Student model (tinycnn, extremetinycnn, ultraextremetinycnn, crnn)")
 
     # Teacher model
     parser.add_argument("--teacher_model", type=str, default="crnn_cbam",
@@ -335,7 +340,7 @@ def main():
     out_dir = run_dir(args.run_name)
     logger = StepLogger(str(out_dir / "train.log"))
 
-    print(f"\n=== Knowledge Distillation Training ===")
+    print("\n=== Knowledge Distillation Training ===")
     print(f"Teacher: {args.teacher_model} ({teacher_params:,} params)")
     print(f"Student: {args.student_model} ({student_params:,} params)")
     print(f"Temperature: {args.temperature}")
