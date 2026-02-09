@@ -1,0 +1,27 @@
+# Virtual environment
+dream-env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.so
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results and logs (large files)
+results/
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
