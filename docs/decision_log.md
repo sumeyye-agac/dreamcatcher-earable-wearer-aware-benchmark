@@ -23,12 +23,12 @@
 ### 2026-02-08 04:30 UTC
 
 - Removed `crnn_cbam` and `crnn_blocks` from the pipeline entirely
-- CBAM attention is now small-model-only: `tinycnn_cbam`, `extremetinycnn_cbam`
+- CBAM attention is now small-model-only: `tinycnn_cbam`
 - Rationale: CRNN is the teacher model — it doesn't need attention boost. CBAM is a tool to boost small student models.
 - Deleted `src/models/crnn_cbam.py` and `src/models/crnn_blocks.py`
 - Removed two-stage screening entirely — all Phase-1 runs execute at full 50 epochs with early stopping
 - Rationale: without CRNN_CBAM, remaining models are small and train fast; screening overhead is not justified
-- New Phase-1 total: 21 runs (3 baselines + 18 CBAM combinations)
+- New Phase-1 total: 11 runs (2 baselines + 9 CBAM combinations)
 - Manifest version bumped to `2026-02-08.v1`
 - Updated: manifest, orchestrator, train.py, train_kd.py, README, model docstrings
 
@@ -141,8 +141,8 @@
 - Seed: `42` (single-seed campaign for now)
 - Class weights: `1.0,1.5,5.5`
 - Single-stage: all Phase-1 runs at `50` epochs (`early_stop_patience=5`)
-- Phase-1: 3 baselines (`crnn`, `tinycnn`, `extremetinycnn`) + 18 CBAM (`tinycnn_cbam`, `extremetinycnn_cbam` × 3 reduction × 3 kernel) = 21 runs
+- Phase-1: 2 baselines (`crnn`, `tinycnn`) + 9 CBAM (`tinycnn_cbam` × 3 reduction × 3 kernel) = 11 runs
 - Training: `batch_size=64`, `num_workers=4`, `lr=0.001` for all models
-- KD grid: `alpha=[0.0, 0.3, 0.6, 0.9]`, `temperature=[3.0, 4.0, 5.0]` → 48 combinations
+- KD grid: `alpha=[0.0, 0.3, 0.6, 0.9]`, `temperature=[3.0, 4.0, 5.0]` with students (`tinycnn`, `tinycnn_cbam`) → 24 combinations
 - KD start condition: teacher gap gate must pass (`>= 0.03` macro-F1)
 - Teacher logits cache: postponed

@@ -4,31 +4,42 @@
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/)
 [![Dataset](https://img.shields.io/badge/Dataset-DreamCatcher-lightgrey.svg)](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher)
+[![Paper](https://img.shields.io/badge/NeurIPS%202024-Paper-b31b1b.svg)](https://dl.acm.org/doi/10.5555/3737916.3740620)
 
-> [!WARNING]
-> **Under Development:** This project is actively evolving. Metrics, scripts, and experiment flows may change as the benchmark is refined.
+> **Note:** This benchmark is under active development. Results and experiment configurations may be updated as new runs complete.
 
-Resource-aware sleep event classification from **in-ear audio** using the DreamCatcher dataset (3-class setup: `quiet`, `breathe`, `snore`).
+Most people who snore have no idea they do, and by the time a sleep disorder is caught, it has often gone unnoticed for years. Clinical diagnosis requires an overnight stay in a lab, which is expensive, intrusive, and impractical for routine screening. Earables (lightweight in-ear devices) can change this by passively capturing respiratory audio while the wearer sleeps, but only if the models are small and accurate enough to run directly on the device without streaming private audio to the cloud.
+
+This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) using the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620). The focus is on the trade-off between model size and classification performance through attention mechanisms (CBAM) and knowledge distillation.
 
 ## What This Repository Focuses On
 
-- Lightweight models for wearable inference (`TinyCNN`, `ExtremeTinyCNN`, `CRNN`)
-- Attention ablations (CBAM on small models only: `TinyCNN_CBAM`, `ExtremeTinyCNN_CBAM`)
+- Lightweight models for wearable inference (`TinyCNN`, `CRNN`)
+- Attention ablations (CBAM on small models only: `TinyCNN_CBAM`)
 - Knowledge distillation from stronger teacher models
 - Reproducible experiment artifacts (`metrics.json`, confusion matrix CSV, leaderboard)
 - Practical deployment metrics (parameter count, model size, CPU latency)
 
-## Benchmark Status
+## Results (Phase-1 Baselines + CBAM)
 
-Committed benchmark tables are intentionally not fixed in this file.
-The source of truth is generated at runtime in:
+> Knowledge distillation experiments (Phase-2) are in progress. Full leaderboard: `results/leaderboard.csv`
 
-- `results/leaderboard.csv`
-- `results/runs/<run_name>/metrics.json`
+### Baselines
 
-This keeps the repository clean and fully aligned with the current reproducible pipeline.
+| Model | Params | Size (MB) | Val F1 (macro) | Val Acc | Test F1 (macro) | Test Acc |
+|-------|--------|-----------|--------|---------|---------|----------|
+| CRNN (teacher) | 73.4K | 0.28 | 79.57% | 83.45% | 82.82% | 86.12% |
+| TinyCNN | 23.5K | 0.09 | 73.69% | 77.72% | 76.87% | 80.57% |
+
+### Best CBAM Configurations
+
+| Model | CBAM (rr, sk) | Params | Size (MB) | Val F1 (macro) | Val Acc | Test F1 (macro) | Test Acc |
+|-------|---------------|--------|-----------|--------|---------|---------|----------|
+| TinyCNN + CBAM | rr8, sk3 | 23.8K | 0.09 | 75.37% | 78.83% | 79.77% | 82.74% |
 
 ## Dataset
+
+Based on: [Wang, Zeyu, et al. "DreamCatcher: A Wearer-aware Multi-modal Sleep Event Dataset Based on Earables in Non-restrictive Environments." *NeurIPS 2024 (Dec)*.](https://dl.acm.org/doi/10.5555/3737916.3740620)
 
 - Source: [THU-PI-Sensing/DreamCatcher](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher)
 - Task config: `sleep_event_classification`
@@ -98,11 +109,11 @@ python3 -m src.training.train \
   --run_name p1_crnn_seed42
 ```
 
-### Distill to a Smaller Student (`ExtremeTinyCNN`)
+### Distill to a Smaller Student (`TinyCNN`)
 
 ```bash
 python3 -m src.training.train_kd \
-  --student_model extremetinycnn \
+  --student_model tinycnn \
   --teacher_model crnn \
   --teacher_checkpoint results/runs/p1_crnn_seed42/checkpoints/best_model.pth \
   --temperature 5.0 \
@@ -112,7 +123,7 @@ python3 -m src.training.train_kd \
   --lr 1e-3 \
   --early_stop_patience 5 \
   --class_weights 1.0,1.5,5.5 \
-  --run_name p2_kd_extremetinycnn_a0p7_t5_seed42
+  --run_name p2_kd_tinycnn_a0p7_t5_seed42
 ```
 
 ## Automated End-to-End Manifest
@@ -129,13 +140,13 @@ python3 scripts/run_experiment_manifest.py \
 Notes:
 
 - Uses one seed (`42`) by default.
-- Single-stage execution: all 21 Phase-1 runs train at `50` epochs (`early_stop_patience=5`).
-  - 3 baselines: `crnn`, `tinycnn`, `extremetinycnn`
-  - 18 CBAM combinations: `tinycnn_cbam` and `extremetinycnn_cbam` (3 reduction x 3 kernel each)
+- Single-stage execution: all 11 Phase-1 runs train at `50` epochs (`early_stop_patience=5`).
+  - 2 baselines: `crnn`, `tinycnn`
+  - 9 CBAM combinations: `tinycnn_cbam` (3 reduction x 3 kernel)
 - KD full stage: `50` epochs for **all KD combinations** (no KD top-k pruning).
 - Results logged to `results/leaderboard.csv`.
 - KD starts only if `CRNN` exceeds the best student by at least `0.03` validation macro-F1.
-- If gap is below `0.05`, teacher tuning runs automatically before KD.
+- If gap is below `0.03`, teacher tuning runs automatically before KD.
 
 Dry-run plan preview:
 
@@ -183,7 +194,7 @@ Contract documentation:
 Execution policy decision (pinned):
 
 - Single-stage: all Phase-1 runs (baselines + CBAM) train at full `50` epochs with early stopping.
-- CBAM is applied only to small models (`tinycnn_cbam`, `extremetinycnn_cbam`). CRNN is the teacher and does not use CBAM.
+- CBAM is applied only to small models (`tinycnn_cbam`). CRNN is the teacher and does not use CBAM.
 - For KD stage, run all KD combinations (no KD top-k pruning).
 - Start KD only after teacher gap check (`>= 0.03` macro-F1).
 
@@ -207,14 +218,3 @@ dreamcatcher-earable-wearer-aware-benchmark/
 └── logs/
 ```
 
-## Current Limitations
-
-- No automated test suite yet (`tests/` is not established)
-- DreamCatcher access is gated and preprocessing is storage-heavy
-- Benchmark numbers should be treated as evolving while this repository is under development
-
-## Roadmap
-
-1. Add automated regression tests for training/evaluation pipelines.
-2. Publish standardized experiment profiles for clean one-command reproduction.
-3. Add richer benchmark reporting (plots + compact model trade-off summary).

@@ -94,28 +94,9 @@ def make_model(model_name: str, n_classes: int, args) -> torch.nn.Module:
             use_ca=use_ca,
             use_sa=use_sa,
         )
-    if model_name == "extremetinycnn":
-        from src.models.extreme_tinycnn import ExtremeTinyCNN
-
-        return ExtremeTinyCNN(n_classes=n_classes)
-    if model_name == "extremetinycnn_cbam":
-        from src.models.extreme_tinycnn_cbam import ExtremeTinyCNN_CBAM
-
-        use_ca = args.att_mode in ("cbam", "ca")
-        use_sa = args.att_mode in ("cbam", "sa")
-        return ExtremeTinyCNN_CBAM(
-            n_classes=n_classes,
-            cbam_reduction=args.cbam_reduction,
-            cbam_sa_kernel=args.cbam_sa_kernel,
-            use_ca=use_ca,
-            use_sa=use_sa,
-        )
     if model_name == "crnn":
         return CRNN(n_classes=n_classes, rnn_hidden=args.rnn_hidden, rnn_layers=args.rnn_layers)
-    raise ValueError(
-        "Unknown model. Choose from: tinycnn, tinycnn_cbam, extremetinycnn, "
-        "extremetinycnn_cbam, crnn"
-    )
+    raise ValueError("Unknown model. Choose from: tinycnn, tinycnn_cbam, crnn")
 
 
 def distillation_loss(
@@ -375,8 +356,6 @@ def main():
         choices=[
             "tinycnn",
             "tinycnn_cbam",
-            "extremetinycnn",
-            "extremetinycnn_cbam",
             "crnn",
         ],
     )
@@ -387,8 +366,6 @@ def main():
         choices=[
             "tinycnn",
             "tinycnn_cbam",
-            "extremetinycnn",
-            "extremetinycnn_cbam",
             "crnn",
         ],
     )

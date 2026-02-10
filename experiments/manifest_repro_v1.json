@@ -31,12 +31,10 @@
   "baseline": {
     "models": [
       "crnn",
-      "tinycnn",
-      "extremetinycnn"
+      "tinycnn"
     ],
     "cbam_models": [
-      "tinycnn_cbam",
-      "extremetinycnn_cbam"
+      "tinycnn_cbam"
     ],
     "cbam_reduction_values": [
       4,
@@ -54,9 +52,7 @@
     "teacher_base_run_name": "p1_crnn_seed42",
     "student_pool_models": [
       "tinycnn",
-      "tinycnn_cbam",
-      "extremetinycnn",
-      "extremetinycnn_cbam"
+      "tinycnn_cbam"
     ],
     "min_f1_gap": 0.03,
     "tune_teacher_if_gap_below": true,
@@ -81,9 +77,7 @@
     "teacher_model": "crnn",
     "students": [
       "tinycnn",
-      "tinycnn_cbam",
-      "extremetinycnn",
-      "extremetinycnn_cbam"
+      "tinycnn_cbam"
     ],
     "alphas": [
       0.0,
