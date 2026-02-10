@@ -1,0 +1,318 @@
+ts_utc,run_name,stage,dt_s,detail
+2026-02-08T17:41:14.054Z,p1_crnn_seed42,run_start,,model=crnn epochs=50 bs=64 lr=0.001 seed=42
+2026-02-08T17:41:14.057Z,p1_crnn_seed42,load_datasets_start,,mode=full
+2026-02-08T17:41:14.059Z,p1_crnn_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-08T17:41:14.059Z,p1_crnn_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-08T17:41:14.075Z,p1_crnn_seed42,model_initialized,,model=crnn params=73411
+2026-02-08T18:17:18.798Z,p1_crnn_seed42,epoch_done,2163.98,epoch=1 train_loss=0.4684 train_acc=0.8008 train_f1=0.7704 val_loss=0.5994 val_acc=0.7927 val_f1=0.7585
+2026-02-08T18:53:02.722Z,p1_crnn_seed42,epoch_done,2143.92,epoch=2 train_loss=0.2887 train_acc=0.8962 train_f1=0.8735 val_loss=0.5253 val_acc=0.8081 val_f1=0.7715
+2026-02-08T19:28:47.561Z,p1_crnn_seed42,epoch_done,2144.84,epoch=3 train_loss=0.2520 train_acc=0.9108 train_f1=0.8888 val_loss=0.5337 val_acc=0.8110 val_f1=0.7784
+2026-02-08T20:04:25.443Z,p1_crnn_seed42,epoch_done,2137.88,epoch=4 train_loss=0.2320 train_acc=0.9179 train_f1=0.8971 val_loss=0.5094 val_acc=0.8200 val_f1=0.7839
+2026-02-08T20:39:59.287Z,p1_crnn_seed42,epoch_done,2133.84,epoch=5 train_loss=0.2187 train_acc=0.9225 train_f1=0.9029 val_loss=0.5026 val_acc=0.8237 val_f1=0.7843
+2026-02-08T21:15:53.916Z,p1_crnn_seed42,epoch_done,2154.63,epoch=6 train_loss=0.2080 train_acc=0.9259 train_f1=0.9071 val_loss=0.5152 val_acc=0.8177 val_f1=0.7816
+2026-02-08T21:52:28.437Z,p1_crnn_seed42,epoch_done,2194.52,epoch=7 train_loss=0.2028 train_acc=0.9273 train_f1=0.9089 val_loss=0.5140 val_acc=0.8219 val_f1=0.7841
+2026-02-08T22:28:57.851Z,p1_crnn_seed42,epoch_done,2189.41,epoch=8 train_loss=0.1952 train_acc=0.9298 train_f1=0.9126 val_loss=0.5359 val_acc=0.8198 val_f1=0.7812
+2026-02-08T23:05:17.146Z,p1_crnn_seed42,epoch_done,2179.29,epoch=9 train_loss=0.1883 train_acc=0.9325 train_f1=0.9157 val_loss=0.5141 val_acc=0.8261 val_f1=0.7853
+2026-02-08T23:40:41.943Z,p1_crnn_seed42,epoch_done,2124.79,epoch=10 train_loss=0.1850 train_acc=0.9335 train_f1=0.9170 val_loss=0.4849 val_acc=0.8345 val_f1=0.7957
+2026-02-09T00:16:16.412Z,p1_crnn_seed42,epoch_done,2134.47,epoch=11 train_loss=0.1799 train_acc=0.9355 train_f1=0.9198 val_loss=0.5008 val_acc=0.8321 val_f1=0.7949
+2026-02-09T00:52:18.476Z,p1_crnn_seed42,epoch_done,2162.06,epoch=12 train_loss=0.1765 train_acc=0.9361 train_f1=0.9211 val_loss=0.5335 val_acc=0.8209 val_f1=0.7837
+2026-02-09T01:28:16.990Z,p1_crnn_seed42,epoch_done,2158.51,epoch=13 train_loss=0.1735 train_acc=0.9374 train_f1=0.9229 val_loss=0.5308 val_acc=0.8341 val_f1=0.7927
+2026-02-09T02:04:19.934Z,p1_crnn_seed42,epoch_done,2162.94,epoch=14 train_loss=0.1705 train_acc=0.9382 train_f1=0.9241 val_loss=0.5049 val_acc=0.8208 val_f1=0.7768
+2026-02-09T02:40:29.123Z,p1_crnn_seed42,epoch_done,2169.19,epoch=15 train_loss=0.1687 train_acc=0.9389 train_f1=0.9250 val_loss=0.5351 val_acc=0.8157 val_f1=0.7651
+2026-02-09T02:40:29.124Z,p1_crnn_seed42,early_stop,,early_stop at epoch=15 best_epoch=10 best_val_f1=0.795672
+2026-02-09T02:40:29.133Z,p1_crnn_seed42,test_eval_start,,
+2026-02-09T02:42:17.238Z,p1_crnn_seed42,test_eval_done,108.10,test_loss=0.4304 test_acc=0.8612 test_f1=0.8282
+2026-02-09T02:43:58.309Z,p1_crnn_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T02:43:58.310Z,p1_crnn_seed42,run_done,,
+2026-02-09T02:45:02.819Z,p1_tinycnn_seed42,run_start,,model=tinycnn epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T02:45:02.822Z,p1_tinycnn_seed42,load_datasets_start,,mode=full
+2026-02-09T02:45:02.829Z,p1_tinycnn_seed42,load_datasets_done,0.01,train=250050 val=63056 test=67256
+2026-02-09T02:45:02.830Z,p1_tinycnn_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T02:45:02.847Z,p1_tinycnn_seed42,model_initialized,,model=tinycnn params=23491
+2026-02-09T02:48:21.183Z,p1_tinycnn_seed42,epoch_done,197.51,epoch=1 train_loss=0.7126 train_acc=0.6835 train_f1=0.6197 val_loss=0.6547 val_acc=0.7327 val_f1=0.6761
+2026-02-09T02:51:33.487Z,p1_tinycnn_seed42,epoch_done,192.30,epoch=2 train_loss=0.4916 train_acc=0.8189 train_f1=0.7823 val_loss=0.7439 val_acc=0.7454 val_f1=0.7277
+2026-02-09T02:54:44.777Z,p1_tinycnn_seed42,epoch_done,191.29,epoch=3 train_loss=0.4272 train_acc=0.8495 train_f1=0.8218 val_loss=0.6657 val_acc=0.7772 val_f1=0.7369
+2026-02-09T02:57:55.204Z,p1_tinycnn_seed42,epoch_done,190.42,epoch=4 train_loss=0.4000 train_acc=0.8642 train_f1=0.8400 val_loss=0.7143 val_acc=0.7588 val_f1=0.7246
+2026-02-09T03:01:05.367Z,p1_tinycnn_seed42,epoch_done,190.16,epoch=5 train_loss=0.3811 train_acc=0.8720 train_f1=0.8491 val_loss=0.8740 val_acc=0.7186 val_f1=0.6985
+2026-02-09T03:04:16.306Z,p1_tinycnn_seed42,epoch_done,190.94,epoch=6 train_loss=0.3645 train_acc=0.8782 train_f1=0.8573 val_loss=0.7488 val_acc=0.7684 val_f1=0.7251
+2026-02-09T03:07:24.819Z,p1_tinycnn_seed42,epoch_done,188.51,epoch=7 train_loss=0.3519 train_acc=0.8831 train_f1=0.8639 val_loss=0.8164 val_acc=0.7350 val_f1=0.6818
+2026-02-09T03:10:36.810Z,p1_tinycnn_seed42,epoch_done,191.99,epoch=8 train_loss=0.3422 train_acc=0.8871 train_f1=0.8692 val_loss=0.7517 val_acc=0.7646 val_f1=0.7174
+2026-02-09T03:10:36.812Z,p1_tinycnn_seed42,early_stop,,early_stop at epoch=8 best_epoch=3 best_val_f1=0.736932
+2026-02-09T03:10:36.817Z,p1_tinycnn_seed42,test_eval_start,,
+2026-02-09T03:10:55.634Z,p1_tinycnn_seed42,test_eval_done,18.82,test_loss=0.6531 test_acc=0.8057 test_f1=0.7687
+2026-02-09T03:11:11.239Z,p1_tinycnn_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T03:11:11.239Z,p1_tinycnn_seed42,run_done,,
+2026-02-09T03:40:32.074Z,p1_tinycnn_cbam_rr4_sk3_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T03:40:32.076Z,p1_tinycnn_cbam_rr4_sk3_seed42,load_datasets_start,,mode=full
+2026-02-09T03:40:32.081Z,p1_tinycnn_cbam_rr4_sk3_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T03:40:32.081Z,p1_tinycnn_cbam_rr4_sk3_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T03:40:32.102Z,p1_tinycnn_cbam_rr4_sk3_seed42,model_initialized,,model=tinycnn_cbam params=24061
+2026-02-09T03:45:45.584Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,312.72,epoch=1 train_loss=0.6472 train_acc=0.7328 train_f1=0.6736 val_loss=0.7097 val_acc=0.7318 val_f1=0.6814
+2026-02-09T03:50:51.945Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,306.36,epoch=2 train_loss=0.4572 train_acc=0.8343 train_f1=0.8062 val_loss=0.7573 val_acc=0.6882 val_f1=0.6419
+2026-02-09T03:55:57.834Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,305.89,epoch=3 train_loss=0.3976 train_acc=0.8562 train_f1=0.8354 val_loss=0.7597 val_acc=0.7343 val_f1=0.6827
+2026-02-09T04:01:04.555Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,306.72,epoch=4 train_loss=0.3572 train_acc=0.8720 train_f1=0.8510 val_loss=0.6700 val_acc=0.7472 val_f1=0.6948
+2026-02-09T04:06:09.781Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,305.22,epoch=5 train_loss=0.3333 train_acc=0.8805 train_f1=0.8600 val_loss=0.7789 val_acc=0.7537 val_f1=0.7175
+2026-02-09T04:11:15.757Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,305.97,epoch=6 train_loss=0.3181 train_acc=0.8857 train_f1=0.8655 val_loss=0.8012 val_acc=0.7608 val_f1=0.7225
+2026-02-09T04:16:20.124Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,304.36,epoch=7 train_loss=0.3086 train_acc=0.8884 train_f1=0.8683 val_loss=0.7090 val_acc=0.7623 val_f1=0.7121
+2026-02-09T04:21:24.900Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,304.77,epoch=8 train_loss=0.2979 train_acc=0.8918 train_f1=0.8724 val_loss=0.6445 val_acc=0.7683 val_f1=0.7190
+2026-02-09T04:26:29.006Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,304.10,epoch=9 train_loss=0.2891 train_acc=0.8945 train_f1=0.8754 val_loss=0.6332 val_acc=0.7519 val_f1=0.6886
+2026-02-09T04:31:33.931Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,304.92,epoch=10 train_loss=0.2826 train_acc=0.8971 train_f1=0.8776 val_loss=0.7098 val_acc=0.7522 val_f1=0.6963
+2026-02-09T04:36:40.201Z,p1_tinycnn_cbam_rr4_sk3_seed42,epoch_done,306.27,epoch=11 train_loss=0.2753 train_acc=0.8994 train_f1=0.8800 val_loss=0.6834 val_acc=0.7368 val_f1=0.6742
+2026-02-09T04:36:40.202Z,p1_tinycnn_cbam_rr4_sk3_seed42,early_stop,,early_stop at epoch=11 best_epoch=6 best_val_f1=0.722525
+2026-02-09T04:36:40.218Z,p1_tinycnn_cbam_rr4_sk3_seed42,test_eval_start,,
+2026-02-09T04:37:01.612Z,p1_tinycnn_cbam_rr4_sk3_seed42,test_eval_done,21.39,test_loss=0.7258 test_acc=0.8124 test_f1=0.7748
+2026-02-09T04:37:18.712Z,p1_tinycnn_cbam_rr4_sk3_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T04:37:18.712Z,p1_tinycnn_cbam_rr4_sk3_seed42,run_done,,
+2026-02-09T04:38:22.060Z,p1_tinycnn_cbam_rr4_sk7_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T04:38:22.063Z,p1_tinycnn_cbam_rr4_sk7_seed42,load_datasets_start,,mode=full
+2026-02-09T04:38:22.067Z,p1_tinycnn_cbam_rr4_sk7_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T04:38:22.067Z,p1_tinycnn_cbam_rr4_sk7_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T04:38:22.088Z,p1_tinycnn_cbam_rr4_sk7_seed42,model_initialized,,model=tinycnn_cbam params=24141
+2026-02-09T04:43:31.831Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,309.01,epoch=1 train_loss=1.0975 train_acc=0.5532 train_f1=0.2452 val_loss=1.0698 val_acc=0.5305 val_f1=0.2311
+2026-02-09T04:48:35.176Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,303.34,epoch=2 train_loss=1.0975 train_acc=0.5558 train_f1=0.2385 val_loss=1.0647 val_acc=0.5305 val_f1=0.2311
+2026-02-09T04:53:37.368Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,302.19,epoch=3 train_loss=0.9255 train_acc=0.6278 train_f1=0.4745 val_loss=0.7534 val_acc=0.7208 val_f1=0.6431
+2026-02-09T04:58:39.094Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.72,epoch=4 train_loss=0.5762 train_acc=0.8018 train_f1=0.7511 val_loss=0.7669 val_acc=0.7366 val_f1=0.6715
+2026-02-09T05:03:41.023Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.93,epoch=5 train_loss=0.5277 train_acc=0.8204 train_f1=0.7784 val_loss=0.7347 val_acc=0.7532 val_f1=0.7097
+2026-02-09T05:08:42.882Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.86,epoch=6 train_loss=0.4917 train_acc=0.8304 train_f1=0.7950 val_loss=0.6317 val_acc=0.7561 val_f1=0.7006
+2026-02-09T05:13:44.833Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.95,epoch=7 train_loss=0.4602 train_acc=0.8405 train_f1=0.8098 val_loss=0.7081 val_acc=0.7562 val_f1=0.7137
+2026-02-09T05:18:46.719Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.88,epoch=8 train_loss=0.4473 train_acc=0.8450 train_f1=0.8181 val_loss=0.6838 val_acc=0.7431 val_f1=0.6885
+2026-02-09T05:23:48.671Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.95,epoch=9 train_loss=0.4351 train_acc=0.8497 train_f1=0.8259 val_loss=0.7047 val_acc=0.7633 val_f1=0.7241
+2026-02-09T05:28:53.394Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,304.72,epoch=10 train_loss=0.4341 train_acc=0.8510 train_f1=0.8289 val_loss=0.7931 val_acc=0.7487 val_f1=0.7067
+2026-02-09T05:34:02.284Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.89,epoch=11 train_loss=0.4103 train_acc=0.8603 train_f1=0.8393 val_loss=0.6515 val_acc=0.7721 val_f1=0.7294
+2026-02-09T05:39:11.258Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.97,epoch=12 train_loss=0.4030 train_acc=0.8650 train_f1=0.8444 val_loss=0.7061 val_acc=0.7653 val_f1=0.7232
+2026-02-09T05:44:15.646Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,304.39,epoch=13 train_loss=0.3900 train_acc=0.8717 train_f1=0.8520 val_loss=0.7912 val_acc=0.7543 val_f1=0.7222
+2026-02-09T05:49:17.563Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,301.91,epoch=14 train_loss=0.3822 train_acc=0.8743 train_f1=0.8540 val_loss=0.7278 val_acc=0.7745 val_f1=0.7410
+2026-02-09T05:54:22.010Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,304.44,epoch=15 train_loss=0.3751 train_acc=0.8774 train_f1=0.8570 val_loss=0.6913 val_acc=0.7700 val_f1=0.7221
+2026-02-09T05:59:30.329Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.32,epoch=16 train_loss=0.3808 train_acc=0.8757 train_f1=0.8552 val_loss=0.7038 val_acc=0.7710 val_f1=0.7288
+2026-02-09T06:04:38.683Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.35,epoch=17 train_loss=0.3664 train_acc=0.8812 train_f1=0.8610 val_loss=0.6804 val_acc=0.7776 val_f1=0.7294
+2026-02-09T06:09:47.150Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.46,epoch=18 train_loss=0.3599 train_acc=0.8837 train_f1=0.8638 val_loss=0.6812 val_acc=0.7851 val_f1=0.7425
+2026-02-09T06:14:55.219Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.07,epoch=19 train_loss=0.5141 train_acc=0.8050 train_f1=0.7754 val_loss=0.7393 val_acc=0.7693 val_f1=0.7205
+2026-02-09T06:20:03.592Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.37,epoch=20 train_loss=0.3797 train_acc=0.8735 train_f1=0.8518 val_loss=0.7268 val_acc=0.7835 val_f1=0.7467
+2026-02-09T06:25:11.561Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,307.97,epoch=21 train_loss=0.3343 train_acc=0.8899 train_f1=0.8691 val_loss=0.6454 val_acc=0.7930 val_f1=0.7443
+2026-02-09T06:30:19.489Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,307.92,epoch=22 train_loss=0.3242 train_acc=0.8925 train_f1=0.8719 val_loss=0.6877 val_acc=0.7887 val_f1=0.7436
+2026-02-09T06:35:27.532Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.04,epoch=23 train_loss=0.3179 train_acc=0.8941 train_f1=0.8737 val_loss=0.6409 val_acc=0.7999 val_f1=0.7525
+2026-02-09T06:40:35.800Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.26,epoch=24 train_loss=0.3120 train_acc=0.8960 train_f1=0.8751 val_loss=0.7495 val_acc=0.7834 val_f1=0.7433
+2026-02-09T06:45:43.934Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.13,epoch=25 train_loss=0.3351 train_acc=0.8826 train_f1=0.8629 val_loss=0.6497 val_acc=0.7805 val_f1=0.7254
+2026-02-09T06:50:51.610Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,307.67,epoch=26 train_loss=0.3055 train_acc=0.8980 train_f1=0.8769 val_loss=0.7547 val_acc=0.7616 val_f1=0.7160
+2026-02-09T06:55:59.932Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.32,epoch=27 train_loss=0.3450 train_acc=0.8763 train_f1=0.8564 val_loss=0.6729 val_acc=0.7934 val_f1=0.7394
+2026-02-09T07:01:08.543Z,p1_tinycnn_cbam_rr4_sk7_seed42,epoch_done,308.61,epoch=28 train_loss=0.3007 train_acc=0.8984 train_f1=0.8777 val_loss=0.5926 val_acc=0.7896 val_f1=0.7326
+2026-02-09T07:01:08.544Z,p1_tinycnn_cbam_rr4_sk7_seed42,early_stop,,early_stop at epoch=28 best_epoch=23 best_val_f1=0.752489
+2026-02-09T07:01:08.553Z,p1_tinycnn_cbam_rr4_sk7_seed42,test_eval_start,,
+2026-02-09T07:01:29.988Z,p1_tinycnn_cbam_rr4_sk7_seed42,test_eval_done,21.43,test_loss=0.6068 test_acc=0.8268 test_f1=0.7828
+2026-02-09T07:01:47.124Z,p1_tinycnn_cbam_rr4_sk7_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T07:01:47.124Z,p1_tinycnn_cbam_rr4_sk7_seed42,run_done,,
+2026-02-09T07:02:50.549Z,p1_tinycnn_cbam_rr4_sk11_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T07:02:50.551Z,p1_tinycnn_cbam_rr4_sk11_seed42,load_datasets_start,,mode=full
+2026-02-09T07:02:50.555Z,p1_tinycnn_cbam_rr4_sk11_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T07:02:50.556Z,p1_tinycnn_cbam_rr4_sk11_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T07:02:50.576Z,p1_tinycnn_cbam_rr4_sk11_seed42,model_initialized,,model=tinycnn_cbam params=24285
+2026-02-09T07:08:03.233Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.93,epoch=1 train_loss=1.0985 train_acc=0.5549 train_f1=0.2407 val_loss=1.0731 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:13:14.659Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.42,epoch=2 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0777 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:18:26.159Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.50,epoch=3 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0755 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:23:37.535Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.37,epoch=4 train_loss=1.0974 train_acc=0.5556 train_f1=0.2392 val_loss=1.0734 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:28:49.137Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.60,epoch=5 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0789 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:34:00.623Z,p1_tinycnn_cbam_rr4_sk11_seed42,epoch_done,311.48,epoch=6 train_loss=1.0973 train_acc=0.5546 train_f1=0.2407 val_loss=1.0745 val_acc=0.5305 val_f1=0.2311
+2026-02-09T07:34:00.624Z,p1_tinycnn_cbam_rr4_sk11_seed42,early_stop,,early_stop at epoch=6 best_epoch=1 best_val_f1=0.231087
+2026-02-09T07:34:00.630Z,p1_tinycnn_cbam_rr4_sk11_seed42,test_eval_start,,
+2026-02-09T07:34:21.611Z,p1_tinycnn_cbam_rr4_sk11_seed42,test_eval_done,20.98,test_loss=1.0720 test_acc=0.5384 test_f1=0.2333
+2026-02-09T07:34:38.889Z,p1_tinycnn_cbam_rr4_sk11_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T07:34:38.890Z,p1_tinycnn_cbam_rr4_sk11_seed42,run_done,,
+2026-02-09T07:35:42.233Z,p1_tinycnn_cbam_rr8_sk3_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T07:35:42.235Z,p1_tinycnn_cbam_rr8_sk3_seed42,load_datasets_start,,mode=full
+2026-02-09T07:35:42.239Z,p1_tinycnn_cbam_rr8_sk3_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T07:35:42.239Z,p1_tinycnn_cbam_rr8_sk3_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T07:35:42.257Z,p1_tinycnn_cbam_rr8_sk3_seed42,model_initialized,,model=tinycnn_cbam params=23801
+2026-02-09T07:40:54.972Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,311.99,epoch=1 train_loss=0.6853 train_acc=0.7007 train_f1=0.6425 val_loss=0.7453 val_acc=0.7162 val_f1=0.6560
+2026-02-09T07:46:00.955Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,305.98,epoch=2 train_loss=0.4631 train_acc=0.8229 train_f1=0.8000 val_loss=0.7439 val_acc=0.7423 val_f1=0.7108
+2026-02-09T07:51:06.226Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,305.27,epoch=3 train_loss=0.4126 train_acc=0.8444 train_f1=0.8213 val_loss=2.1967 val_acc=0.4821 val_f1=0.4876
+2026-02-09T07:56:11.043Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.81,epoch=4 train_loss=0.3555 train_acc=0.8664 train_f1=0.8441 val_loss=0.6462 val_acc=0.7611 val_f1=0.7166
+2026-02-09T08:01:16.091Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,305.04,epoch=5 train_loss=0.3309 train_acc=0.8775 train_f1=0.8556 val_loss=0.6966 val_acc=0.7483 val_f1=0.6943
+2026-02-09T08:06:21.154Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,305.06,epoch=6 train_loss=0.3162 train_acc=0.8834 train_f1=0.8616 val_loss=0.6535 val_acc=0.7694 val_f1=0.7349
+2026-02-09T08:11:26.144Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.99,epoch=7 train_loss=0.3066 train_acc=0.8871 train_f1=0.8659 val_loss=0.6471 val_acc=0.7655 val_f1=0.7219
+2026-02-09T08:16:31.068Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.92,epoch=8 train_loss=0.3028 train_acc=0.8873 train_f1=0.8662 val_loss=0.6312 val_acc=0.7842 val_f1=0.7493
+2026-02-09T08:21:35.584Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.51,epoch=9 train_loss=0.2936 train_acc=0.8913 train_f1=0.8710 val_loss=0.6033 val_acc=0.7883 val_f1=0.7537
+2026-02-09T08:26:40.216Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.63,epoch=10 train_loss=0.2880 train_acc=0.8939 train_f1=0.8743 val_loss=0.7177 val_acc=0.7458 val_f1=0.7139
+2026-02-09T08:31:45.073Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.86,epoch=11 train_loss=0.2834 train_acc=0.8951 train_f1=0.8759 val_loss=0.6472 val_acc=0.7797 val_f1=0.7411
+2026-02-09T08:36:49.608Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.53,epoch=12 train_loss=0.2787 train_acc=0.8969 train_f1=0.8780 val_loss=0.6796 val_acc=0.7613 val_f1=0.7261
+2026-02-09T08:41:54.257Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.65,epoch=13 train_loss=0.2760 train_acc=0.8979 train_f1=0.8786 val_loss=0.6890 val_acc=0.7646 val_f1=0.7212
+2026-02-09T08:46:58.952Z,p1_tinycnn_cbam_rr8_sk3_seed42,epoch_done,304.69,epoch=14 train_loss=0.2721 train_acc=0.8996 train_f1=0.8810 val_loss=0.7009 val_acc=0.7781 val_f1=0.7441
+2026-02-09T08:46:58.952Z,p1_tinycnn_cbam_rr8_sk3_seed42,early_stop,,early_stop at epoch=14 best_epoch=9 best_val_f1=0.753740
+2026-02-09T08:46:58.966Z,p1_tinycnn_cbam_rr8_sk3_seed42,test_eval_start,,
+2026-02-09T08:47:19.789Z,p1_tinycnn_cbam_rr8_sk3_seed42,test_eval_done,20.82,test_loss=0.5417 test_acc=0.8274 test_f1=0.7977
+2026-02-09T08:47:36.805Z,p1_tinycnn_cbam_rr8_sk3_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T08:47:36.805Z,p1_tinycnn_cbam_rr8_sk3_seed42,run_done,,
+2026-02-09T08:48:40.184Z,p1_tinycnn_cbam_rr8_sk7_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T08:48:40.186Z,p1_tinycnn_cbam_rr8_sk7_seed42,load_datasets_start,,mode=full
+2026-02-09T08:48:40.190Z,p1_tinycnn_cbam_rr8_sk7_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T08:48:40.191Z,p1_tinycnn_cbam_rr8_sk7_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T08:48:40.214Z,p1_tinycnn_cbam_rr8_sk7_seed42,model_initialized,,model=tinycnn_cbam params=23881
+2026-02-09T08:53:54.233Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,313.29,epoch=1 train_loss=0.7424 train_acc=0.7043 train_f1=0.6120 val_loss=1.0128 val_acc=0.6757 val_f1=0.6580
+2026-02-09T08:59:02.338Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.10,epoch=2 train_loss=0.5192 train_acc=0.8172 train_f1=0.7754 val_loss=0.6768 val_acc=0.7491 val_f1=0.7059
+2026-02-09T09:04:10.529Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.19,epoch=3 train_loss=0.4839 train_acc=0.8322 train_f1=0.8006 val_loss=0.7055 val_acc=0.7527 val_f1=0.7182
+2026-02-09T09:09:19.210Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.68,epoch=4 train_loss=0.4635 train_acc=0.8397 train_f1=0.8120 val_loss=0.6135 val_acc=0.7548 val_f1=0.7007
+2026-02-09T09:14:27.995Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.78,epoch=5 train_loss=0.4534 train_acc=0.8435 train_f1=0.8183 val_loss=0.6541 val_acc=0.7461 val_f1=0.6981
+2026-02-09T09:19:36.876Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.88,epoch=6 train_loss=0.4426 train_acc=0.8469 train_f1=0.8232 val_loss=0.6899 val_acc=0.7522 val_f1=0.7152
+2026-02-09T09:24:45.657Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.78,epoch=7 train_loss=0.4316 train_acc=0.8511 train_f1=0.8287 val_loss=0.6297 val_acc=0.7552 val_f1=0.7098
+2026-02-09T09:29:54.475Z,p1_tinycnn_cbam_rr8_sk7_seed42,epoch_done,308.82,epoch=8 train_loss=0.4228 train_acc=0.8544 train_f1=0.8331 val_loss=0.7404 val_acc=0.7521 val_f1=0.7156
+2026-02-09T09:29:54.476Z,p1_tinycnn_cbam_rr8_sk7_seed42,early_stop,,early_stop at epoch=8 best_epoch=3 best_val_f1=0.718250
+2026-02-09T09:29:54.482Z,p1_tinycnn_cbam_rr8_sk7_seed42,test_eval_start,,
+2026-02-09T09:30:15.293Z,p1_tinycnn_cbam_rr8_sk7_seed42,test_eval_done,20.81,test_loss=0.7456 test_acc=0.7613 test_f1=0.7161
+2026-02-09T09:30:32.403Z,p1_tinycnn_cbam_rr8_sk7_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T09:30:32.403Z,p1_tinycnn_cbam_rr8_sk7_seed42,run_done,,
+2026-02-09T09:31:35.730Z,p1_tinycnn_cbam_rr8_sk11_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T09:31:35.732Z,p1_tinycnn_cbam_rr8_sk11_seed42,load_datasets_start,,mode=full
+2026-02-09T09:31:35.736Z,p1_tinycnn_cbam_rr8_sk11_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T09:31:35.736Z,p1_tinycnn_cbam_rr8_sk11_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T09:31:35.754Z,p1_tinycnn_cbam_rr8_sk11_seed42,model_initialized,,model=tinycnn_cbam params=24025
+2026-02-09T09:36:54.142Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,317.66,epoch=1 train_loss=1.0978 train_acc=0.5442 train_f1=0.2491 val_loss=1.0706 val_acc=0.5305 val_f1=0.2311
+2026-02-09T09:42:06.332Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,312.19,epoch=2 train_loss=1.0975 train_acc=0.5559 train_f1=0.2382 val_loss=1.0790 val_acc=0.5305 val_f1=0.2311
+2026-02-09T09:47:18.575Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,312.24,epoch=3 train_loss=1.0975 train_acc=0.5559 train_f1=0.2382 val_loss=1.0798 val_acc=0.5305 val_f1=0.2311
+2026-02-09T09:52:30.746Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,312.17,epoch=4 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0756 val_acc=0.5305 val_f1=0.2311
+2026-02-09T09:57:43.168Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,312.42,epoch=5 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0827 val_acc=0.5305 val_f1=0.2311
+2026-02-09T10:02:55.353Z,p1_tinycnn_cbam_rr8_sk11_seed42,epoch_done,312.18,epoch=6 train_loss=1.0974 train_acc=0.5553 train_f1=0.2392 val_loss=1.0683 val_acc=0.5305 val_f1=0.2311
+2026-02-09T10:02:55.354Z,p1_tinycnn_cbam_rr8_sk11_seed42,early_stop,,early_stop at epoch=6 best_epoch=1 best_val_f1=0.231087
+2026-02-09T10:02:55.360Z,p1_tinycnn_cbam_rr8_sk11_seed42,test_eval_start,,
+2026-02-09T10:03:16.235Z,p1_tinycnn_cbam_rr8_sk11_seed42,test_eval_done,20.87,test_loss=1.0693 test_acc=0.5384 test_f1=0.2333
+2026-02-09T10:03:33.494Z,p1_tinycnn_cbam_rr8_sk11_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T10:03:33.494Z,p1_tinycnn_cbam_rr8_sk11_seed42,run_done,,
+2026-02-09T10:04:36.832Z,p1_tinycnn_cbam_rr16_sk3_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T10:04:36.834Z,p1_tinycnn_cbam_rr16_sk3_seed42,load_datasets_start,,mode=full
+2026-02-09T10:04:36.838Z,p1_tinycnn_cbam_rr16_sk3_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T10:04:36.838Z,p1_tinycnn_cbam_rr16_sk3_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T10:04:36.856Z,p1_tinycnn_cbam_rr16_sk3_seed42,model_initialized,,model=tinycnn_cbam params=23671
+2026-02-09T10:09:49.497Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,311.91,epoch=1 train_loss=0.6794 train_acc=0.6964 train_f1=0.6421 val_loss=0.7315 val_acc=0.7188 val_f1=0.6645
+2026-02-09T10:14:55.534Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,306.03,epoch=2 train_loss=0.4423 train_acc=0.8270 train_f1=0.8050 val_loss=0.7570 val_acc=0.7157 val_f1=0.6840
+2026-02-09T10:20:01.360Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.82,epoch=3 train_loss=0.4103 train_acc=0.8419 train_f1=0.8223 val_loss=0.9835 val_acc=0.5836 val_f1=0.5976
+2026-02-09T10:25:07.091Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.73,epoch=4 train_loss=0.3788 train_acc=0.8560 train_f1=0.8360 val_loss=0.7432 val_acc=0.7203 val_f1=0.6740
+2026-02-09T10:30:12.217Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.12,epoch=5 train_loss=0.3534 train_acc=0.8688 train_f1=0.8480 val_loss=0.7489 val_acc=0.7249 val_f1=0.6828
+2026-02-09T10:35:17.331Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.11,epoch=6 train_loss=0.3386 train_acc=0.8762 train_f1=0.8549 val_loss=0.6447 val_acc=0.7637 val_f1=0.7264
+2026-02-09T10:40:22.437Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.10,epoch=7 train_loss=0.3249 train_acc=0.8816 train_f1=0.8603 val_loss=0.7219 val_acc=0.7397 val_f1=0.7062
+2026-02-09T10:45:27.411Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,304.97,epoch=8 train_loss=0.3155 train_acc=0.8856 train_f1=0.8643 val_loss=0.7005 val_acc=0.7629 val_f1=0.7292
+2026-02-09T10:50:32.131Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,304.72,epoch=9 train_loss=0.3095 train_acc=0.8885 train_f1=0.8673 val_loss=0.7421 val_acc=0.7308 val_f1=0.7013
+2026-02-09T10:55:37.204Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.07,epoch=10 train_loss=0.3021 train_acc=0.8915 train_f1=0.8708 val_loss=0.6716 val_acc=0.7647 val_f1=0.7236
+2026-02-09T11:00:42.373Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.17,epoch=11 train_loss=0.2977 train_acc=0.8923 train_f1=0.8718 val_loss=0.6355 val_acc=0.7762 val_f1=0.7312
+2026-02-09T11:05:47.469Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.09,epoch=12 train_loss=0.2938 train_acc=0.8936 train_f1=0.8737 val_loss=0.6164 val_acc=0.7735 val_f1=0.7359
+2026-02-09T11:10:52.925Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.45,epoch=13 train_loss=0.2889 train_acc=0.8962 train_f1=0.8762 val_loss=0.6154 val_acc=0.7811 val_f1=0.7410
+2026-02-09T11:15:58.898Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,305.97,epoch=14 train_loss=0.2854 train_acc=0.8970 train_f1=0.8774 val_loss=0.6975 val_acc=0.7685 val_f1=0.7293
+2026-02-09T11:21:01.935Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,303.03,epoch=15 train_loss=0.2828 train_acc=0.8978 train_f1=0.8784 val_loss=0.6490 val_acc=0.7816 val_f1=0.7392
+2026-02-09T11:26:01.340Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,299.40,epoch=16 train_loss=0.2785 train_acc=0.8995 train_f1=0.8802 val_loss=0.6562 val_acc=0.7735 val_f1=0.7345
+2026-02-09T11:31:01.456Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,300.11,epoch=17 train_loss=0.2745 train_acc=0.9006 train_f1=0.8821 val_loss=0.6037 val_acc=0.7864 val_f1=0.7482
+2026-02-09T11:36:01.492Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,300.03,epoch=18 train_loss=0.2721 train_acc=0.9015 train_f1=0.8828 val_loss=0.7507 val_acc=0.7514 val_f1=0.7239
+2026-02-09T11:41:01.487Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,299.99,epoch=19 train_loss=0.2697 train_acc=0.9018 train_f1=0.8836 val_loss=0.7004 val_acc=0.7740 val_f1=0.7347
+2026-02-09T11:46:01.436Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,299.95,epoch=20 train_loss=0.2663 train_acc=0.9033 train_f1=0.8852 val_loss=0.6344 val_acc=0.7792 val_f1=0.7391
+2026-02-09T11:51:01.511Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,300.07,epoch=21 train_loss=0.2641 train_acc=0.9045 train_f1=0.8868 val_loss=0.6496 val_acc=0.7833 val_f1=0.7457
+2026-02-09T11:56:01.672Z,p1_tinycnn_cbam_rr16_sk3_seed42,epoch_done,300.16,epoch=22 train_loss=0.2622 train_acc=0.9048 train_f1=0.8875 val_loss=0.6610 val_acc=0.7741 val_f1=0.7414
+2026-02-09T11:56:01.674Z,p1_tinycnn_cbam_rr16_sk3_seed42,early_stop,,early_stop at epoch=22 best_epoch=17 best_val_f1=0.748237
+2026-02-09T11:56:01.680Z,p1_tinycnn_cbam_rr16_sk3_seed42,test_eval_start,,
+2026-02-09T11:56:22.445Z,p1_tinycnn_cbam_rr16_sk3_seed42,test_eval_done,20.77,test_loss=0.5503 test_acc=0.8215 test_f1=0.7843
+2026-02-09T11:56:39.464Z,p1_tinycnn_cbam_rr16_sk3_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T11:56:39.464Z,p1_tinycnn_cbam_rr16_sk3_seed42,run_done,,
+2026-02-09T11:57:42.902Z,p1_tinycnn_cbam_rr16_sk7_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T11:57:42.904Z,p1_tinycnn_cbam_rr16_sk7_seed42,load_datasets_start,,mode=full
+2026-02-09T11:57:42.907Z,p1_tinycnn_cbam_rr16_sk7_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T11:57:42.908Z,p1_tinycnn_cbam_rr16_sk7_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T11:57:42.926Z,p1_tinycnn_cbam_rr16_sk7_seed42,model_initialized,,model=tinycnn_cbam params=23751
+2026-02-09T12:02:50.892Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,307.24,epoch=1 train_loss=1.0996 train_acc=0.5398 train_f1=0.2684 val_loss=1.0755 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:07:52.791Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,301.90,epoch=2 train_loss=1.0974 train_acc=0.5560 train_f1=0.2393 val_loss=1.0791 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:12:54.776Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,301.98,epoch=3 train_loss=1.0975 train_acc=0.5559 train_f1=0.2382 val_loss=1.0736 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:17:56.898Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,302.12,epoch=4 train_loss=1.0975 train_acc=0.5540 train_f1=0.2440 val_loss=1.0719 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:23:01.470Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,304.57,epoch=5 train_loss=1.0974 train_acc=0.5548 train_f1=0.2404 val_loss=1.0750 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:28:10.255Z,p1_tinycnn_cbam_rr16_sk7_seed42,epoch_done,308.78,epoch=6 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0663 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:28:10.256Z,p1_tinycnn_cbam_rr16_sk7_seed42,early_stop,,early_stop at epoch=6 best_epoch=1 best_val_f1=0.231087
+2026-02-09T12:28:10.262Z,p1_tinycnn_cbam_rr16_sk7_seed42,test_eval_start,,
+2026-02-09T12:28:31.062Z,p1_tinycnn_cbam_rr16_sk7_seed42,test_eval_done,20.80,test_loss=1.0745 test_acc=0.5384 test_f1=0.2333
+2026-02-09T12:28:48.476Z,p1_tinycnn_cbam_rr16_sk7_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T12:28:48.476Z,p1_tinycnn_cbam_rr16_sk7_seed42,run_done,,
+2026-02-09T12:29:51.956Z,p1_tinycnn_cbam_rr16_sk11_seed42,run_start,,model=tinycnn_cbam epochs=50 bs=64 lr=0.001 seed=42
+2026-02-09T12:29:51.958Z,p1_tinycnn_cbam_rr16_sk11_seed42,load_datasets_start,,mode=full
+2026-02-09T12:29:51.962Z,p1_tinycnn_cbam_rr16_sk11_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T12:29:51.962Z,p1_tinycnn_cbam_rr16_sk11_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T12:29:51.980Z,p1_tinycnn_cbam_rr16_sk11_seed42,model_initialized,,model=tinycnn_cbam params=23895
+2026-02-09T12:35:10.569Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,317.87,epoch=1 train_loss=1.0981 train_acc=0.5426 train_f1=0.2614 val_loss=1.0816 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:40:22.675Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,312.10,epoch=2 train_loss=1.0975 train_acc=0.5559 train_f1=0.2382 val_loss=1.0647 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:45:34.758Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,312.08,epoch=3 train_loss=1.0983 train_acc=0.5557 train_f1=0.2386 val_loss=1.0787 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:50:46.919Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,312.16,epoch=4 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0679 val_acc=0.5305 val_f1=0.2311
+2026-02-09T12:55:58.843Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,311.92,epoch=5 train_loss=1.0967 train_acc=0.5538 train_f1=0.2496 val_loss=1.0725 val_acc=0.5305 val_f1=0.2311
+2026-02-09T13:01:10.689Z,p1_tinycnn_cbam_rr16_sk11_seed42,epoch_done,311.84,epoch=6 train_loss=1.0974 train_acc=0.5559 train_f1=0.2382 val_loss=1.0719 val_acc=0.5305 val_f1=0.2311
+2026-02-09T13:01:10.690Z,p1_tinycnn_cbam_rr16_sk11_seed42,early_stop,,early_stop at epoch=6 best_epoch=1 best_val_f1=0.231087
+2026-02-09T13:01:10.696Z,p1_tinycnn_cbam_rr16_sk11_seed42,test_eval_start,,
+2026-02-09T13:01:31.618Z,p1_tinycnn_cbam_rr16_sk11_seed42,test_eval_done,20.92,test_loss=1.0808 test_acc=0.5384 test_f1=0.2333
+2026-02-09T13:01:48.893Z,p1_tinycnn_cbam_rr16_sk11_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T13:01:48.893Z,p1_tinycnn_cbam_rr16_sk11_seed42,run_done,,
+2026-02-09T20:11:35.357Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,run_start,,model=crnn epochs=50 bs=64 lr=0.002 seed=42
+2026-02-09T20:11:35.359Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,load_datasets_start,,mode=full
+2026-02-09T20:11:35.363Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,load_datasets_done,0.00,train=250050 val=63056 test=67256
+2026-02-09T20:11:35.363Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T20:11:35.380Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,model_initialized,,model=crnn params=73411
+2026-02-09T20:47:57.329Z,p1_crnn_tune_lr0p002_wd1em05_gc0_seed42,epoch_done,2181.23,epoch=1 train_loss=1.0998 train_acc=0.4661 train_f1=0.3230 val_loss=1.0602 val_acc=0.5305 val_f1=0.2311
+2026-02-09T20:58:39.686Z,p2_kd_tinycnn_a0_t3_seed42,load_datasets_start,,cache_dir=results/cache/spectrograms
+2026-02-09T20:58:39.692Z,p2_kd_tinycnn_a0_t3_seed42,load_datasets_done,,train=250050 val=63056 test=67256
+2026-02-09T20:58:39.693Z,p2_kd_tinycnn_a0_t3_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T20:58:39.717Z,p2_kd_tinycnn_a0_t3_seed42,models_initialized,,teacher=crnn teacher_params=73411 student=tinycnn student_params=23491
+2026-02-09T20:58:39.717Z,p2_kd_tinycnn_a0_t3_seed42,run_start,,teacher=crnn student=tinycnn epochs=50 bs=64 lr=0.001 alpha=0.0 tau=3.0
+2026-02-09T21:07:49.134Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,546.98,epoch=1 train_loss=0.6046 train_acc=0.7546 train_f1=0.7001 val_loss=0.8370 val_acc=0.7198 val_f1=0.6828 alpha=0.00 tau=3.00
+2026-02-09T21:16:53.588Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,544.45,epoch=2 train_loss=0.4511 train_acc=0.8413 train_f1=0.8079 val_loss=0.7089 val_acc=0.7574 val_f1=0.7177 alpha=0.00 tau=3.00
+2026-02-09T21:25:50.122Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,536.53,epoch=3 train_loss=0.4119 train_acc=0.8594 train_f1=0.8318 val_loss=0.6449 val_acc=0.7707 val_f1=0.7266 alpha=0.00 tau=3.00
+2026-02-09T21:34:48.934Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,538.81,epoch=4 train_loss=0.3917 train_acc=0.8684 train_f1=0.8438 val_loss=0.6285 val_acc=0.7886 val_f1=0.7475 alpha=0.00 tau=3.00
+2026-02-09T21:43:43.669Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,534.73,epoch=5 train_loss=0.3772 train_acc=0.8751 train_f1=0.8524 val_loss=0.8367 val_acc=0.7526 val_f1=0.7289 alpha=0.00 tau=3.00
+2026-02-09T21:52:26.959Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,523.29,epoch=6 train_loss=0.3656 train_acc=0.8791 train_f1=0.8580 val_loss=0.7019 val_acc=0.7718 val_f1=0.7336 alpha=0.00 tau=3.00
+2026-02-09T22:01:29.905Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,542.94,epoch=7 train_loss=0.3571 train_acc=0.8824 train_f1=0.8624 val_loss=0.6697 val_acc=0.7542 val_f1=0.7118 alpha=0.00 tau=3.00
+2026-02-09T22:10:38.841Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,548.93,epoch=8 train_loss=0.3470 train_acc=0.8849 train_f1=0.8665 val_loss=0.6840 val_acc=0.7789 val_f1=0.7425 alpha=0.00 tau=3.00
+2026-02-09T22:19:37.182Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,538.34,epoch=9 train_loss=0.3397 train_acc=0.8872 train_f1=0.8699 val_loss=0.7206 val_acc=0.7792 val_f1=0.7478 alpha=0.00 tau=3.00
+2026-02-09T22:28:36.532Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,539.35,epoch=10 train_loss=0.3348 train_acc=0.8886 train_f1=0.8718 val_loss=0.6817 val_acc=0.7811 val_f1=0.7342 alpha=0.00 tau=3.00
+2026-02-09T22:38:45.734Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,609.20,epoch=11 train_loss=0.3278 train_acc=0.8911 train_f1=0.8749 val_loss=0.7037 val_acc=0.7765 val_f1=0.7319 alpha=0.00 tau=3.00
+2026-02-09T22:55:38.531Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,1012.79,epoch=12 train_loss=0.3234 train_acc=0.8924 train_f1=0.8768 val_loss=0.7105 val_acc=0.7788 val_f1=0.7419 alpha=0.00 tau=3.00
+2026-02-09T23:13:27.287Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,1068.73,epoch=13 train_loss=0.3180 train_acc=0.8938 train_f1=0.8790 val_loss=0.7788 val_acc=0.7676 val_f1=0.7411 alpha=0.00 tau=3.00
+2026-02-09T23:30:45.424Z,p2_kd_tinycnn_a0_t3_seed42,epoch_done,1038.13,epoch=14 train_loss=0.3151 train_acc=0.8946 train_f1=0.8803 val_loss=0.7821 val_acc=0.7732 val_f1=0.7441 alpha=0.00 tau=3.00
+2026-02-09T23:30:45.428Z,p2_kd_tinycnn_a0_t3_seed42,early_stop,,early_stop at epoch=14 best_epoch=9 best_val_f1=0.747796
+2026-02-09T23:32:30.064Z,p2_kd_tinycnn_a0_t3_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-09T23:32:30.066Z,p2_kd_tinycnn_a0_t3_seed42,run_done,,
+2026-02-09T23:33:35.779Z,p2_kd_tinycnn_a0_t4_seed42,load_datasets_start,,cache_dir=results/cache/spectrograms
+2026-02-09T23:33:35.788Z,p2_kd_tinycnn_a0_t4_seed42,load_datasets_done,,train=250050 val=63056 test=67256
+2026-02-09T23:33:35.788Z,p2_kd_tinycnn_a0_t4_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-09T23:33:35.940Z,p2_kd_tinycnn_a0_t4_seed42,models_initialized,,teacher=crnn teacher_params=73411 student=tinycnn student_params=23491
+2026-02-09T23:33:35.940Z,p2_kd_tinycnn_a0_t4_seed42,run_start,,teacher=crnn student=tinycnn epochs=50 bs=64 lr=0.001 alpha=0.0 tau=4.0
+2026-02-09T23:48:16.137Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,878.56,epoch=1 train_loss=0.6046 train_acc=0.7546 train_f1=0.7001 val_loss=0.8370 val_acc=0.7198 val_f1=0.6828 alpha=0.00 tau=4.00
+2026-02-09T23:57:02.852Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,526.71,epoch=2 train_loss=0.4511 train_acc=0.8413 train_f1=0.8079 val_loss=0.7089 val_acc=0.7574 val_f1=0.7177 alpha=0.00 tau=4.00
+2026-02-10T00:05:50.054Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,527.20,epoch=3 train_loss=0.4119 train_acc=0.8594 train_f1=0.8318 val_loss=0.6449 val_acc=0.7707 val_f1=0.7266 alpha=0.00 tau=4.00
+2026-02-10T00:14:43.002Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,532.94,epoch=4 train_loss=0.3917 train_acc=0.8684 train_f1=0.8438 val_loss=0.6285 val_acc=0.7886 val_f1=0.7475 alpha=0.00 tau=4.00
+2026-02-10T00:23:31.543Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,528.54,epoch=5 train_loss=0.3772 train_acc=0.8751 train_f1=0.8524 val_loss=0.8367 val_acc=0.7526 val_f1=0.7289 alpha=0.00 tau=4.00
+2026-02-10T00:32:20.113Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,528.57,epoch=6 train_loss=0.3656 train_acc=0.8791 train_f1=0.8580 val_loss=0.7019 val_acc=0.7718 val_f1=0.7336 alpha=0.00 tau=4.00
+2026-02-10T00:41:09.397Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,529.28,epoch=7 train_loss=0.3571 train_acc=0.8824 train_f1=0.8624 val_loss=0.6697 val_acc=0.7542 val_f1=0.7118 alpha=0.00 tau=4.00
+2026-02-10T00:49:58.621Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,529.22,epoch=8 train_loss=0.3470 train_acc=0.8849 train_f1=0.8665 val_loss=0.6840 val_acc=0.7789 val_f1=0.7425 alpha=0.00 tau=4.00
+2026-02-10T00:58:47.155Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,528.53,epoch=9 train_loss=0.3397 train_acc=0.8872 train_f1=0.8699 val_loss=0.7206 val_acc=0.7792 val_f1=0.7478 alpha=0.00 tau=4.00
+2026-02-10T01:07:36.157Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,529.00,epoch=10 train_loss=0.3348 train_acc=0.8886 train_f1=0.8718 val_loss=0.6817 val_acc=0.7811 val_f1=0.7342 alpha=0.00 tau=4.00
+2026-02-10T01:16:25.793Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,529.63,epoch=11 train_loss=0.3278 train_acc=0.8911 train_f1=0.8749 val_loss=0.7037 val_acc=0.7765 val_f1=0.7319 alpha=0.00 tau=4.00
+2026-02-10T01:25:14.573Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,528.78,epoch=12 train_loss=0.3234 train_acc=0.8924 train_f1=0.8768 val_loss=0.7105 val_acc=0.7788 val_f1=0.7419 alpha=0.00 tau=4.00
+2026-02-10T01:34:04.978Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,530.40,epoch=13 train_loss=0.3180 train_acc=0.8938 train_f1=0.8790 val_loss=0.7788 val_acc=0.7676 val_f1=0.7411 alpha=0.00 tau=4.00
+2026-02-10T01:42:54.449Z,p2_kd_tinycnn_a0_t4_seed42,epoch_done,529.47,epoch=14 train_loss=0.3151 train_acc=0.8946 train_f1=0.8803 val_loss=0.7821 val_acc=0.7732 val_f1=0.7441 alpha=0.00 tau=4.00
+2026-02-10T01:42:54.452Z,p2_kd_tinycnn_a0_t4_seed42,early_stop,,early_stop at epoch=14 best_epoch=9 best_val_f1=0.747796
+2026-02-10T01:43:27.593Z,p2_kd_tinycnn_a0_t4_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-10T01:43:27.595Z,p2_kd_tinycnn_a0_t4_seed42,run_done,,
+2026-02-10T01:44:30.845Z,p2_kd_tinycnn_a0_t5_seed42,load_datasets_start,,cache_dir=results/cache/spectrograms
+2026-02-10T01:44:30.849Z,p2_kd_tinycnn_a0_t5_seed42,load_datasets_done,,train=250050 val=63056 test=67256
+2026-02-10T01:44:30.849Z,p2_kd_tinycnn_a0_t5_seed42,device_selected,,device=mps name=Apple MPS GPU
+2026-02-10T01:44:30.897Z,p2_kd_tinycnn_a0_t5_seed42,models_initialized,,teacher=crnn teacher_params=73411 student=tinycnn student_params=23491
+2026-02-10T01:44:30.897Z,p2_kd_tinycnn_a0_t5_seed42,run_start,,teacher=crnn student=tinycnn epochs=50 bs=64 lr=0.001 alpha=0.0 tau=5.0
+2026-02-10T01:53:22.900Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,531.32,epoch=1 train_loss=0.6046 train_acc=0.7546 train_f1=0.7001 val_loss=0.8370 val_acc=0.7198 val_f1=0.6828 alpha=0.00 tau=5.00
+2026-02-10T02:02:07.864Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,524.96,epoch=2 train_loss=0.4511 train_acc=0.8413 train_f1=0.8079 val_loss=0.7089 val_acc=0.7574 val_f1=0.7177 alpha=0.00 tau=5.00
+2026-02-10T02:10:52.601Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,524.73,epoch=3 train_loss=0.4119 train_acc=0.8594 train_f1=0.8318 val_loss=0.6449 val_acc=0.7707 val_f1=0.7266 alpha=0.00 tau=5.00
+2026-02-10T02:19:39.689Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,527.08,epoch=4 train_loss=0.3917 train_acc=0.8684 train_f1=0.8438 val_loss=0.6285 val_acc=0.7886 val_f1=0.7475 alpha=0.00 tau=5.00
+2026-02-10T02:28:27.229Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,527.54,epoch=5 train_loss=0.3772 train_acc=0.8751 train_f1=0.8524 val_loss=0.8367 val_acc=0.7526 val_f1=0.7289 alpha=0.00 tau=5.00
+2026-02-10T02:37:13.620Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,526.39,epoch=6 train_loss=0.3656 train_acc=0.8791 train_f1=0.8580 val_loss=0.7019 val_acc=0.7718 val_f1=0.7336 alpha=0.00 tau=5.00
+2026-02-10T02:45:59.410Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,525.78,epoch=7 train_loss=0.3571 train_acc=0.8824 train_f1=0.8624 val_loss=0.6697 val_acc=0.7542 val_f1=0.7118 alpha=0.00 tau=5.00
+2026-02-10T02:54:44.727Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,525.31,epoch=8 train_loss=0.3470 train_acc=0.8849 train_f1=0.8665 val_loss=0.6840 val_acc=0.7789 val_f1=0.7425 alpha=0.00 tau=5.00
+2026-02-10T03:03:32.030Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,527.30,epoch=9 train_loss=0.3397 train_acc=0.8872 train_f1=0.8699 val_loss=0.7206 val_acc=0.7792 val_f1=0.7478 alpha=0.00 tau=5.00
+2026-02-10T03:12:23.793Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,531.76,epoch=10 train_loss=0.3348 train_acc=0.8886 train_f1=0.8718 val_loss=0.6817 val_acc=0.7811 val_f1=0.7342 alpha=0.00 tau=5.00
+2026-02-10T03:21:13.788Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,529.99,epoch=11 train_loss=0.3278 train_acc=0.8911 train_f1=0.8749 val_loss=0.7037 val_acc=0.7765 val_f1=0.7319 alpha=0.00 tau=5.00
+2026-02-10T03:30:02.967Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,529.18,epoch=12 train_loss=0.3234 train_acc=0.8924 train_f1=0.8768 val_loss=0.7105 val_acc=0.7788 val_f1=0.7419 alpha=0.00 tau=5.00
+2026-02-10T03:38:56.167Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,533.20,epoch=13 train_loss=0.3180 train_acc=0.8938 train_f1=0.8790 val_loss=0.7788 val_acc=0.7676 val_f1=0.7411 alpha=0.00 tau=5.00
+2026-02-10T03:47:51.412Z,p2_kd_tinycnn_a0_t5_seed42,epoch_done,535.24,epoch=14 train_loss=0.3151 train_acc=0.8946 train_f1=0.8803 val_loss=0.7821 val_acc=0.7732 val_f1=0.7441 alpha=0.00 tau=5.00
+2026-02-10T03:47:51.414Z,p2_kd_tinycnn_a0_t5_seed42,early_stop,,early_stop at epoch=14 best_epoch=9 best_val_f1=0.747796
+2026-02-10T03:48:24.788Z,p2_kd_tinycnn_a0_t5_seed42,leaderboard_written,,path=results/leaderboard.csv
+2026-02-10T03:48:24.789Z,p2_kd_tinycnn_a0_t5_seed42,run_done,,
+2026-02-10T03:55:27.906Z,p2_kd_tinycnn_a0p3_t3_seed42,load_datasets_start,,cache_dir=results/cache/spectrograms
+2026-02-10T03:55:27.916Z,p2_kd_tinycnn_a0p3_t3_seed42,load_datasets_done,,train=250050 val=63056 test=67256
+2026-02-10T03:55:27.918Z,p2_kd_tinycnn_a0p3_t3_seed42,device_selected,,device=cpu name=CPU
+2026-02-10T03:55:27.930Z,p2_kd_tinycnn_a0p3_t3_seed42,models_initialized,,teacher=crnn teacher_params=73411 student=tinycnn student_params=23491
+2026-02-10T03:55:27.930Z,p2_kd_tinycnn_a0p3_t3_seed42,run_start,,teacher=crnn student=tinycnn epochs=50 bs=64 lr=0.001 alpha=0.3 tau=3.0
