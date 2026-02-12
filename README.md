@@ -20,66 +20,43 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 - Reproducible experiment artifacts (`metrics.json`, confusion matrix CSV, leaderboard)
 - Practical deployment metrics (parameter count, model size, CPU latency)
 
-## Results Snapshot (Phase-1 + Phase-2 Completed)
+## Results Snapshot (Best-Only Narrative)
 
-> Full leaderboard: `results/leaderboard.csv` (Phase-1: 11/11, Phase-2 KD: 18/18)
+- Campaign status: **Phase-1 = 11/11 complete**, **Phase-2 KD = 18/18 complete**
+- Full run-level source of truth: `results/leaderboard.csv`
 
-### Baselines
+### Model Journey (Best-Only)
 
-| Model | Params | Size (MB) | Val F1 (macro) | Val Acc | Test F1 (macro) | Test Acc |
-|-------|--------|-----------|--------|---------|---------|----------|
-| CRNN (teacher) | 73.4K | 0.28 | 79.57% | 83.45% | 82.82% | 86.12% |
-| TinyCNN | 23.5K | 0.09 | 73.69% | 77.72% | 76.87% | 80.57% |
+`delta_vs_prev_stage` is branch-aware:
+- `Student baseline` is compared to `Teacher baseline`
+- `Student + CBAM` is compared to `Student baseline`
+- `Best KD on TinyCNN` is compared to `Student baseline`
+- `Best KD on TinyCNN_CBAM` is compared to `Student + CBAM baseline`
 
-### Best CBAM Configurations
+| stage | run_name | params | test_f1 | test_acc | delta_vs_prev_stage | delta_vs_student_baseline | teacher_gap_remaining |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Teacher baseline (CRNN) | `p1_crnn_seed42` | 73,411 | 82.82% | 86.12% | - | +5.95pp | 0.00pp |
+| Student baseline (TinyCNN) | `p1_tinycnn_seed42` | 23,491 | 76.87% | 80.57% | -5.95pp | 0.00pp | 5.95pp |
+| Student + CBAM baseline (rr8/sk3) | `p1_tinycnn_cbam_rr8_sk3_seed42` | 23,801 | 79.77% | 82.74% | +2.90pp | +2.90pp | 3.06pp |
+| Best KD on TinyCNN | `p2_kd_tinycnn_a0p6_t5_seed42` | 23,491 | 78.87% | 82.23% | +2.00pp | +2.00pp | 3.95pp |
+| Best KD on TinyCNN_CBAM | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 23,801 | 81.71% | 84.95% | +1.95pp | +4.84pp | 1.11pp |
 
-| Model | CBAM (rr, sk) | Params | Size (MB) | Val F1 (macro) | Val Acc | Test F1 (macro) | Test Acc |
-|-------|---------------|--------|-----------|--------|---------|---------|----------|
-| TinyCNN + CBAM | rr8, sk3 | 23.8K | 0.09 | 75.37% | 78.83% | 79.77% | 82.74% |
+Interpretation:
+- CBAM gives a strong lift over TinyCNN baseline (+2.90pp test F1).
+- KD improves both student tracks in best settings (TinyCNN and TinyCNN_CBAM).
+- Best overall compact student is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`), leaving only 1.11pp F1 gap to teacher.
+- For this campaign, combining architectural attention (CBAM) and distillation yields the strongest small-model result.
 
-### KD Campaign Summary
+### Parameter Exploration Caveat
 
-- Teacher (`CRNN`) test F1 / acc: **82.82% / 86.12%**
-- Best KD for `tinycnn`: `p2_kd_tinycnn_a0p6_t5_seed42` -> **78.87% F1**, **82.23% acc**
-- Best KD for `tinycnn_cbam`: `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` -> **81.71% F1**, **84.95% acc**
+This repo includes a broad KD sweep (`alpha x tau`, 18 runs).  
+README shows only the best-path narrative; full sensitivity and run-level comparisons are in:
+- `notebooks/results_analysis.ipynb`
+- `results/leaderboard.csv`
 
-## KD vs Non-KD Decision Table
+### Detailed Run-Level Comparisons
 
-Source: `results/leaderboard.csv`  
-Teacher reference: `p1_crnn_seed42` (test F1 = 82.82%)
-
-Baseline references:
-
-- `tinycnn` baseline (`p1_tinycnn_seed42`): test F1 = 76.87%, test acc = 80.57%
-- `tinycnn_cbam` baseline (`p1_tinycnn_cbam_rr8_sk3_seed42`): test F1 = 79.77%, test acc = 82.74%
-
-### TinyCNN KD Runs (Non-CBAM)
-
-| run_name | teacher_test_f1 | kd_test_f1 | delta_test_f1_vs_baseline | kd_test_acc | delta_test_acc_vs_baseline | teacher_gap_closed |
-|---|---:|---:|---:|---:|---:|---:|
-| `p2_kd_tinycnn_a0p6_t5_seed42` | 82.82% | 78.87% | 2.00% | 82.23% | 1.67% | 33.63% |
-| `p2_kd_tinycnn_a0p9_t3_seed42` | 82.82% | 78.48% | 1.61% | 82.17% | 1.60% | 27.07% |
-| `p2_kd_tinycnn_a0p3_t4_seed42` | 82.82% | 78.44% | 1.57% | 82.03% | 1.46% | 26.35% |
-| `p2_kd_tinycnn_a0p6_t3_seed42` | 82.82% | 78.39% | 1.52% | 82.13% | 1.57% | 25.56% |
-| `p2_kd_tinycnn_a0p3_t3_seed42` | 82.82% | 78.13% | 1.26% | 82.01% | 1.44% | 21.13% |
-| `p2_kd_tinycnn_a0p9_t5_seed42` | 82.82% | 78.12% | 1.25% | 81.89% | 1.32% | 21.01% |
-| `p2_kd_tinycnn_a0p3_t5_seed42` | 82.82% | 77.33% | 0.46% | 81.37% | 0.80% | 7.73% |
-| `p2_kd_tinycnn_a0p6_t4_seed42` | 82.82% | 77.19% | 0.32% | 81.33% | 0.77% | 5.40% |
-| `p2_kd_tinycnn_a0p9_t4_seed42` | 82.82% | 76.65% | -0.22% | 80.97% | 0.40% | -3.69% |
-
-### TinyCNN_CBAM KD Runs
-
-| run_name | teacher_test_f1 | kd_test_f1 | delta_test_f1_vs_baseline | kd_test_acc | delta_test_acc_vs_baseline | teacher_gap_closed |
-|---|---:|---:|---:|---:|---:|---:|
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 82.82% | 81.71% | 1.95% | 84.95% | 2.21% | 63.69% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t5_seed42` | 82.82% | 81.40% | 1.63% | 84.52% | 1.79% | 53.36% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t5_seed42` | 82.82% | 81.36% | 1.60% | 84.63% | 1.89% | 52.19% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t3_seed42` | 82.82% | 81.14% | 1.38% | 84.38% | 1.65% | 45.06% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t4_seed42` | 82.82% | 81.12% | 1.35% | 84.54% | 1.80% | 44.25% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t4_seed42` | 82.82% | 80.78% | 1.01% | 84.00% | 1.26% | 33.08% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t4_seed42` | 82.82% | 80.35% | 0.59% | 83.90% | 1.16% | 19.23% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t5_seed42` | 82.82% | 80.19% | 0.42% | 83.29% | 0.55% | 13.76% |
-| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t3_seed42` | 82.82% | 80.09% | 0.32% | 83.44% | 0.70% | 10.57% |
+All run-level comparisons are in `notebooks/results_analysis.ipynb`.
 
 ## Dataset
 
