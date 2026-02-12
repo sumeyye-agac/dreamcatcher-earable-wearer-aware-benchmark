@@ -20,9 +20,9 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 - Reproducible experiment artifacts (`metrics.json`, confusion matrix CSV, leaderboard)
 - Practical deployment metrics (parameter count, model size, CPU latency)
 
-## Results (Phase-1 Baselines + CBAM)
+## Results Snapshot (Phase-1 + Phase-2 Completed)
 
-> Knowledge distillation experiments (Phase-2) are in progress. Full leaderboard: `results/leaderboard.csv`
+> Full leaderboard: `results/leaderboard.csv` (Phase-1: 11/11, Phase-2 KD: 18/18)
 
 ### Baselines
 
@@ -36,6 +36,50 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 | Model | CBAM (rr, sk) | Params | Size (MB) | Val F1 (macro) | Val Acc | Test F1 (macro) | Test Acc |
 |-------|---------------|--------|-----------|--------|---------|---------|----------|
 | TinyCNN + CBAM | rr8, sk3 | 23.8K | 0.09 | 75.37% | 78.83% | 79.77% | 82.74% |
+
+### KD Campaign Summary
+
+- Teacher (`CRNN`) test F1 / acc: **82.82% / 86.12%**
+- Best KD for `tinycnn`: `p2_kd_tinycnn_a0p6_t5_seed42` -> **78.87% F1**, **82.23% acc**
+- Best KD for `tinycnn_cbam`: `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` -> **81.71% F1**, **84.95% acc**
+
+## KD vs Non-KD Decision Table
+
+Source: `results/leaderboard.csv`  
+Teacher reference: `p1_crnn_seed42` (test F1 = 82.82%)
+
+Baseline references:
+
+- `tinycnn` baseline (`p1_tinycnn_seed42`): test F1 = 76.87%, test acc = 80.57%
+- `tinycnn_cbam` baseline (`p1_tinycnn_cbam_rr8_sk3_seed42`): test F1 = 79.77%, test acc = 82.74%
+
+### TinyCNN KD Runs (Non-CBAM)
+
+| run_name | teacher_test_f1 | kd_test_f1 | delta_test_f1_vs_baseline | kd_test_acc | delta_test_acc_vs_baseline | teacher_gap_closed |
+|---|---:|---:|---:|---:|---:|---:|
+| `p2_kd_tinycnn_a0p6_t5_seed42` | 82.82% | 78.87% | 2.00% | 82.23% | 1.67% | 33.63% |
+| `p2_kd_tinycnn_a0p9_t3_seed42` | 82.82% | 78.48% | 1.61% | 82.17% | 1.60% | 27.07% |
+| `p2_kd_tinycnn_a0p3_t4_seed42` | 82.82% | 78.44% | 1.57% | 82.03% | 1.46% | 26.35% |
+| `p2_kd_tinycnn_a0p6_t3_seed42` | 82.82% | 78.39% | 1.52% | 82.13% | 1.57% | 25.56% |
+| `p2_kd_tinycnn_a0p3_t3_seed42` | 82.82% | 78.13% | 1.26% | 82.01% | 1.44% | 21.13% |
+| `p2_kd_tinycnn_a0p9_t5_seed42` | 82.82% | 78.12% | 1.25% | 81.89% | 1.32% | 21.01% |
+| `p2_kd_tinycnn_a0p3_t5_seed42` | 82.82% | 77.33% | 0.46% | 81.37% | 0.80% | 7.73% |
+| `p2_kd_tinycnn_a0p6_t4_seed42` | 82.82% | 77.19% | 0.32% | 81.33% | 0.77% | 5.40% |
+| `p2_kd_tinycnn_a0p9_t4_seed42` | 82.82% | 76.65% | -0.22% | 80.97% | 0.40% | -3.69% |
+
+### TinyCNN_CBAM KD Runs
+
+| run_name | teacher_test_f1 | kd_test_f1 | delta_test_f1_vs_baseline | kd_test_acc | delta_test_acc_vs_baseline | teacher_gap_closed |
+|---|---:|---:|---:|---:|---:|---:|
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 82.82% | 81.71% | 1.95% | 84.95% | 2.21% | 63.69% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t5_seed42` | 82.82% | 81.40% | 1.63% | 84.52% | 1.79% | 53.36% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t5_seed42` | 82.82% | 81.36% | 1.60% | 84.63% | 1.89% | 52.19% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t3_seed42` | 82.82% | 81.14% | 1.38% | 84.38% | 1.65% | 45.06% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p6_t4_seed42` | 82.82% | 81.12% | 1.35% | 84.54% | 1.80% | 44.25% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t4_seed42` | 82.82% | 80.78% | 1.01% | 84.00% | 1.26% | 33.08% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t4_seed42` | 82.82% | 80.35% | 0.59% | 83.90% | 1.16% | 19.23% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t5_seed42` | 82.82% | 80.19% | 0.42% | 83.29% | 0.55% | 13.76% |
+| `p2_kd_tinycnn_cbam_rr8_sk3_a0p3_t3_seed42` | 82.82% | 80.09% | 0.32% | 83.44% | 0.70% | 10.57% |
 
 ## Dataset
 
@@ -117,13 +161,13 @@ python3 -m src.training.train_kd \
   --teacher_model crnn \
   --teacher_checkpoint results/runs/p1_crnn_seed42/checkpoints/best_model.pth \
   --temperature 5.0 \
-  --alpha 0.7 \
+  --alpha 0.6 \
   --epochs 50 \
   --batch_size 64 \
   --lr 1e-3 \
   --early_stop_patience 5 \
   --class_weights 1.0,1.5,5.5 \
-  --run_name p2_kd_tinycnn_a0p7_t5_seed42
+  --run_name p2_kd_tinycnn_a0p6_t5_seed42
 ```
 
 ## Automated End-to-End Manifest
@@ -133,8 +177,15 @@ Run the full reproducible pipeline (phase-1 baselines/CBAM, teacher gap gate, th
 ```bash
 python3 scripts/run_experiment_manifest.py \
   --manifest experiments/manifest_repro_v1.json \
-  --fresh-start \
   --resume
+```
+
+Fresh clean replay (optional):
+
+```bash
+python3 scripts/run_experiment_manifest.py \
+  --manifest experiments/manifest_repro_v1.json \
+  --fresh-start
 ```
 
 Notes:
@@ -160,6 +211,41 @@ python3 scripts/run_experiment_manifest.py \
 
 - Training device priority is: **CUDA -> MPS -> CPU**
 - `pin_memory` is enabled only on CUDA (disabled on MPS/CPU to avoid unnecessary warnings and overhead)
+- The default manifest (`experiments/manifest_repro_v1.json`) keeps portable auto-device behavior.
+- Optional local workflow: use a local manifest with `runtime_policy.preferred_device="mps"` and CPU fallback confirmation settings if you want an explicit prompt before CPU fallback.
+
+## Reproducibility Contract (Quick Audit)
+
+Run these checks from repo root:
+
+```bash
+python3 scripts/check_consistency.py --strict
+python3 scripts/run_experiment_manifest.py --manifest experiments/manifest_repro_v1.json --dry-run
+```
+
+Expected outcome:
+
+- Policy totals match across manifest and docs (Phase-1=11, KD=18).
+- KD alpha/temperature grids match across manifest and docs.
+- No stale policy phrases in README/decision log.
+
+## Negative Results Policy
+
+Negative or dominated outcomes are documented, not hidden:
+
+- `docs/negative_results.md`
+
+Each entry links experiment evidence (run name + artifact path) and the resulting decision.
+
+## Consistency Policy
+
+Canonical experiment policy lives in `experiments/manifest_repro_v1.json`.
+
+- Docs must mirror manifest policy totals and KD grid.
+- Any policy update requires updating docs in the same commit.
+- `scripts/check_consistency.py --strict` is the pre-push gate.
+
+<!-- consistency: phase1_total=11 kd_total=18 kd_alphas=0.3,0.6,0.9 kd_taus=3.0,4.0,5.0 -->
 
 ## Artifacts and Tracking
 
@@ -217,4 +303,3 @@ dreamcatcher-earable-wearer-aware-benchmark/
 │   └── leaderboard.csv
 └── logs/
 ```
-

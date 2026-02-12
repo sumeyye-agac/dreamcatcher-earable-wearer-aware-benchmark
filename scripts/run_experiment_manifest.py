@@ -80,6 +80,15 @@ class ManifestRunner:
         self.kd_after_teacher_gate_only = bool(
             self.runtime_policy.get("kd_after_teacher_gap_gate_only", True)
         )
+        self.preferred_device = str(self.runtime_policy.get("preferred_device", "auto")).lower()
+        self.cpu_fallback_confirm_once = bool(self.runtime_policy.get("cpu_fallback_confirm_once", False))
+        self.cpu_fallback_requires_tty = bool(self.runtime_policy.get("cpu_fallback_requires_tty", True))
+        self.cpu_num_workers_override = int(self.runtime_policy.get("cpu_num_workers_override", 0))
+        if self.cpu_num_workers_override < 0:
+            raise ValueError("runtime_policy.cpu_num_workers_override must be >= 0")
+        self.cpu_fallback_approved = False
+        self.cpu_fallback_active = False
+        self._cpu_override_logged = False
 
         self.run_index: dict[str, RunSpec] = {}
 
@@ -89,6 +98,101 @@ class ManifestRunner:
         self.logs_dir.mkdir(parents=True, exist_ok=True)
         with self.orch_log.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
+
+    @staticmethod
+    def _probe_device_support() -> dict[str, Any]:
+        probe: dict[str, Any] = {
+            "cuda_available": False,
+            "mps_built": False,
+            "mps_available": False,
+            "selected_device": "cpu",
+        }
+        try:
+            import torch
+
+            probe["cuda_available"] = bool(torch.cuda.is_available())
+            mps_backend = getattr(torch.backends, "mps", None)
+            if mps_backend is not None:
+                probe["mps_built"] = bool(mps_backend.is_built())
+                probe["mps_available"] = bool(mps_backend.is_available())
+        except Exception as exc:
+            probe["probe_error"] = repr(exc)
+
+        if probe["cuda_available"]:
+            probe["selected_device"] = "cuda"
+        elif probe["mps_available"]:
+            probe["selected_device"] = "mps"
+        else:
+            probe["selected_device"] = "cpu"
+        return probe
+
+    def _configure_device_policy(self) -> None:
+        if self.preferred_device not in {"auto", "mps"}:
+            self.log(
+                f"Unknown runtime_policy.preferred_device={self.preferred_device!r}; "
+                "falling back to auto."
+            )
+            self.preferred_device = "auto"
+
+        probe = self._probe_device_support()
+        self.log(
+            "DEVICE_PROBE "
+            f"selected={probe['selected_device']} "
+            f"cuda_available={probe['cuda_available']} "
+            f"mps_built={probe['mps_built']} "
+            f"mps_available={probe['mps_available']}"
+        )
+        if "probe_error" in probe:
+            self.log(f"DEVICE_PROBE_ERROR {probe['probe_error']}")
+
+        if self.preferred_device != "mps":
+            return
+
+        if probe["mps_available"]:
+            self.log("PREFERRED_DEVICE_OK preferred_device=mps")
+            return
+
+        self.log("PREFERRED_DEVICE_UNAVAILABLE preferred_device=mps; evaluating CPU fallback policy")
+        if not self.cpu_fallback_confirm_once:
+            self.cpu_fallback_active = True
+            self.log("CPU_FALLBACK_AUTO enabled (no confirmation required by policy)")
+            return
+
+        is_tty = bool(sys.stdin and sys.stdin.isatty())
+        if self.cpu_fallback_requires_tty and not is_tty:
+            raise RuntimeError(
+                "MPS unavailable and CPU fallback confirmation is required, "
+                "but no interactive TTY is available."
+            )
+
+        if not is_tty:
+            self.cpu_fallback_active = True
+            self.log("CPU_FALLBACK_AUTO no_tty_and_confirmation_not_required")
+            return
+
+        prompt = (
+            "MPS is unavailable for this run. "
+            "Continue with CPU fallback for this manifest run? [y/N]: "
+        )
+        reply = input(prompt).strip().lower()
+        if reply not in {"y", "yes"}:
+            raise RuntimeError("CPU fallback denied by user.")
+
+        self.cpu_fallback_approved = True
+        self.cpu_fallback_active = True
+        self.log("CPU_FALLBACK_APPROVED user_confirmed=true")
+
+    def _effective_num_workers(self, base_num_workers: Any) -> int:
+        base = int(base_num_workers)
+        if not self.cpu_fallback_active:
+            return base
+        if not self._cpu_override_logged:
+            self.log(
+                "CPU_NUM_WORKERS_OVERRIDE_APPLIED "
+                f"base={base} override={self.cpu_num_workers_override}"
+            )
+            self._cpu_override_logged = True
+        return self.cpu_num_workers_override
 
     def append_status(
         self,
@@ -372,7 +476,12 @@ class ManifestRunner:
             pass
         return str(a) == str(b)
 
-    def _resolved_config_matches_spec(self, run_name: str, spec: RunSpec) -> bool:
+    def _resolved_config_matches_spec(
+        self,
+        run_name: str,
+        spec: RunSpec,
+        ignore_keys: set[str] | None = None,
+    ) -> bool:
         resolved_path = self.run_root / run_name / "resolved_config.json"
         if not resolved_path.exists():
             return False
@@ -381,7 +490,10 @@ class ManifestRunner:
         except Exception:
             return False
         args = spec.meta.get("args", {})
+        ignored = ignore_keys or set()
         for key, expected in args.items():
+            if key in ignored:
+                continue
             if key not in resolved:
                 return False
             if not self._value_equal(resolved[key], expected):
@@ -405,11 +517,18 @@ class ManifestRunner:
     def _is_run_reusable(self, spec: RunSpec) -> bool:
         if not self._is_run_valid(spec.run_name):
             return False
+        ignored_keys: set[str] = set()
+        if self.cpu_fallback_active:
+            # CPU fallback uses a safer worker count (typically 0). Keep completed runs reusable
+            # even if their original num_workers differs.
+            ignored_keys.add("num_workers")
         # Primary check: resolved config must match current spec args.
-        if not self._resolved_config_matches_spec(spec.run_name, spec):
+        if not self._resolved_config_matches_spec(spec.run_name, spec, ignore_keys=ignored_keys):
             self.log(f"RESUME mismatch (resolved_config): rerun {spec.run_name}")
             return False
         # Secondary strict check when orchestrator signature exists.
+        if self.cpu_fallback_active:
+            return True
         sig_path = self.run_root / spec.run_name / "orchestrator_spec_signature.json"
         if sig_path.exists() and not self._stored_spec_signature_matches(spec.run_name, spec):
             self.log(f"RESUME mismatch (orchestrator signature): rerun {spec.run_name}")
@@ -514,7 +633,7 @@ class ManifestRunner:
             "seed": self.seed,
             "epochs": epochs,
             "batch_size": self.common["batch_size"],
-            "num_workers": self.common["num_workers"],
+            "num_workers": self._effective_num_workers(self.common["num_workers"]),
             "lr": lr,
             "weight_decay": weight_decay,
             "grad_clip": grad_clip,
@@ -580,7 +699,7 @@ class ManifestRunner:
             "alpha": alpha,
             "epochs": epochs,
             "batch_size": kd_cfg["batch_size"],
-            "num_workers": kd_cfg["num_workers"],
+            "num_workers": self._effective_num_workers(kd_cfg["num_workers"]),
             "lr": kd_cfg["lr"],
             "weight_decay": kd_cfg["weight_decay"],
             "early_stop_patience": early_stop_patience,
@@ -833,6 +952,7 @@ class ManifestRunner:
             self.log("DRY-RUN finished. Cache checks, gate checks, and executions were skipped.")
             return 0
 
+        self._configure_device_policy()
         self.ensure_cache()
 
         phase1_full_specs = self.build_phase1_full_specs()

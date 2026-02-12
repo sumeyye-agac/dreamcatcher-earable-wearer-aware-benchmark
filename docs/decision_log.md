@@ -6,6 +6,21 @@
 - Scope: important configuration/process decisions and repository-wide changes
 - This file is the primary memory for experiment process decisions
 
+## 2026-02-12 Timeline (UTC)
+
+### 2026-02-12 10:13 UTC
+
+- Completed Phase-2 KD campaign under current manifest policy.
+- Final status: Phase-1 `11/11` complete, KD `18/18` complete.
+- Last completed run: `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t5_seed42` (`status=ok`).
+
+### 2026-02-12 10:40 UTC
+
+- Synced reproducibility-facing docs with the canonical manifest policy.
+- Added KD vs non-KD decision table in README using final leaderboard values.
+- Added explicit negative-results policy doc: `docs/negative_results.md`.
+- Added consistency gate script: `scripts/check_consistency.py`.
+
 ## 2026-02-08 Timeline (UTC)
 
 ### 2026-02-08 --- Speed Optimization: batch64, num_workers=4
@@ -143,6 +158,6 @@
 - Single-stage: all Phase-1 runs at `50` epochs (`early_stop_patience=5`)
 - Phase-1: 2 baselines (`crnn`, `tinycnn`) + 9 CBAM (`tinycnn_cbam` × 3 reduction × 3 kernel) = 11 runs
 - Training: `batch_size=64`, `num_workers=4`, `lr=0.001` for all models
-- KD grid: `alpha=[0.0, 0.3, 0.6, 0.9]`, `temperature=[3.0, 4.0, 5.0]` with students (`tinycnn`, `tinycnn_cbam`) → 24 combinations
+- KD grid: `alpha=[0.3, 0.6, 0.9]`, `temperature=[3.0, 4.0, 5.0]` with students (`tinycnn`, `tinycnn_cbam`) → 18 combinations
 - KD start condition: teacher gap gate must pass (`>= 0.03` macro-F1)
 - Teacher logits cache: postponed
