@@ -7,7 +7,9 @@
 
 > **Note:** This benchmark is under active development. Results and experiment configurations may be updated as new runs complete.
 
-This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) from the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620), with a focus on wearable constraints: small models, strong classification performance, and reproducible experiment tracking. The benchmark evaluates `TinyCNN`/`CRNN` with attention (`CBAM`) and knowledge distillation.
+Most people who snore have no idea they do, and by the time a sleep disorder is caught, it has often gone unnoticed for years. Clinical diagnosis requires an overnight stay in a lab, which is expensive, intrusive, and impractical for routine screening. Earables (lightweight in-ear devices) can change this by passively capturing respiratory audio while the wearer sleeps, but only if the models are small and accurate enough to run directly on the device without streaming private audio to the cloud.
+
+This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) using the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620). The focus is on the trade-off between model size and classification performance through attention mechanisms (CBAM) and knowledge distillation.
 
 ## What This Repository Focuses On
 
