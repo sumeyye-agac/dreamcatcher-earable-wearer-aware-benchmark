@@ -8,9 +8,7 @@
 
 > **Note:** This benchmark is under active development. Results and experiment configurations may be updated as new runs complete.
 
-Most people who snore have no idea they do, and by the time a sleep disorder is caught, it has often gone unnoticed for years. Clinical diagnosis requires an overnight stay in a lab, which is expensive, intrusive, and impractical for routine screening. Earables (lightweight in-ear devices) can change this by passively capturing respiratory audio while the wearer sleeps, but only if the models are small and accurate enough to run directly on the device without streaming private audio to the cloud.
-
-This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) using the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620). The focus is on the trade-off between model size and classification performance through attention mechanisms (CBAM) and knowledge distillation.
+This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) from the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620), with a focus on wearable constraints: small models, strong classification performance, and reproducible experiment tracking. The benchmark evaluates `TinyCNN`/`CRNN` with attention (`CBAM`) and knowledge distillation.
 
 ## What This Repository Focuses On
 
@@ -27,21 +25,22 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 
 ### Model Journey (Best-Only)
 
-`delta_vs_tinycnn_baseline` is computed against `p1_tinycnn_seed42`.
+In KD scenarios, `CRNN` is used as the teacher and `TinyCNN` as the student.
 
-| stage | run_name | params | test_f1 | test_acc | delta_vs_tinycnn_baseline |
-|---|---|---:|---:|---:|---:|
-| Teacher baseline (CRNN) | `p1_crnn_seed42` | 73,411 | 82.82% | 86.12% | +5.95pp |
-| Student baseline (TinyCNN) | `p1_tinycnn_seed42` | 23,491 | 76.87% | 80.57% | 0.00pp |
-| Student + CBAM baseline (rr8/sk3) | `p1_tinycnn_cbam_rr8_sk3_seed42` | 23,801 | 79.77% | 82.74% | +2.90pp |
-| Best KD on TinyCNN | `p2_kd_tinycnn_a0p6_t5_seed42` | 23,491 | 78.87% | 82.23% | +2.00pp |
-| Best KD on TinyCNN_CBAM | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 23,801 | 81.71% | 84.95% | +4.84pp |
+| Test Acc. | Test F1 | Params | Run Name | Stage |
+|---:|---:|---:|---|---|
+| 86.12% | **82.82%** 🧠 | 73,411 | `p1_crnn_seed42` | CRNN baseline |
+| 80.57% | **76.87%** 🪶 | 23,491 | `p1_tinycnn_seed42` | TinyCNN baseline |
+| 82.23% | 78.87% | 23,491 | `p2_kd_tinycnn_a0p6_t5_seed42` | Best TinyCNN w/ KD |
+| 82.74% | 79.77% | 23,801 | `p1_tinycnn_cbam_rr8_sk3_seed42` | Best TinyCNN w/ CBAM |
+| 84.95% | **81.71%** 🚀 | 23,801 | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | Best TinyCNN w/ KD+CBAM |
+
+`Test F1` refers to macro-F1 on the test split.
 
 Interpretation:
-- CBAM gives a strong lift over TinyCNN baseline (+2.90pp test F1).
-- KD improves both student tracks in best settings (TinyCNN and TinyCNN_CBAM).
-- Best overall compact student is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`) with +4.84pp over TinyCNN baseline.
-- For this campaign, combining architectural attention (CBAM) and distillation yields the strongest small-model result.
+- Best compact result is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`) at **81.71%** test macro-F1.
+- Final teacher gap is **1.11pp** (teacher **82.82%** vs best compact **81.71%**), down from **5.95pp** at TinyCNN baseline.
+- This is achieved with a much smaller model: **23,801 params** vs **73,411** for teacher (about **3.08x smaller**, ~**67.6% fewer** parameters).
 
 ### Parameter Exploration Caveat
 
@@ -49,10 +48,6 @@ This repo includes a broad KD sweep (`alpha x tau`, 18 runs).
 README shows only the best-path narrative; full sensitivity and run-level comparisons are in:
 - `notebooks/results_analysis.ipynb`
 - `results/leaderboard.csv`
-
-### Detailed Run-Level Comparisons
-
-All run-level comparisons are in `notebooks/results_analysis.ipynb`.
 
 ## Dataset
 
@@ -187,7 +182,9 @@ python3 scripts/run_experiment_manifest.py \
 - The default manifest (`experiments/manifest_repro_v1.json`) keeps portable auto-device behavior.
 - Optional local workflow: use a local manifest with `runtime_policy.preferred_device="mps"` and CPU fallback confirmation settings if you want an explicit prompt before CPU fallback.
 
-## Reproducibility Contract (Quick Audit)
+## Reproducibility & Consistency
+
+Canonical experiment policy lives in `experiments/manifest_repro_v1.json`.
 
 Run these checks from repo root:
 
@@ -201,6 +198,7 @@ Expected outcome:
 - Policy totals match across manifest and docs (Phase-1=11, KD=18).
 - KD alpha/temperature grids match across manifest and docs.
 - No stale policy phrases in README/decision log.
+- `scripts/check_consistency.py --strict` remains the pre-push gate.
 
 ## Negative Results Policy
 
@@ -209,14 +207,6 @@ Negative or dominated outcomes are documented, not hidden:
 - `docs/negative_results.md`
 
 Each entry links experiment evidence (run name + artifact path) and the resulting decision.
-
-## Consistency Policy
-
-Canonical experiment policy lives in `experiments/manifest_repro_v1.json`.
-
-- Docs must mirror manifest policy totals and KD grid.
-- Any policy update requires updating docs in the same commit.
-- `scripts/check_consistency.py --strict` is the pre-push gate.
 
 <!-- consistency: phase1_total=11 kd_total=18 kd_alphas=0.3,0.6,0.9 kd_taus=3.0,4.0,5.0 -->
 
