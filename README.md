@@ -27,24 +27,20 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 
 ### Model Journey (Best-Only)
 
-`delta_vs_prev_stage` is branch-aware:
-- `Student baseline` is compared to `Teacher baseline`
-- `Student + CBAM` is compared to `Student baseline`
-- `Best KD on TinyCNN` is compared to `Student baseline`
-- `Best KD on TinyCNN_CBAM` is compared to `Student + CBAM baseline`
+`delta_vs_tinycnn_baseline` is computed against `p1_tinycnn_seed42`.
 
-| stage | run_name | params | test_f1 | test_acc | delta_vs_prev_stage | delta_vs_student_baseline | teacher_gap_remaining |
-|---|---|---:|---:|---:|---:|---:|---:|
-| Teacher baseline (CRNN) | `p1_crnn_seed42` | 73,411 | 82.82% | 86.12% | - | +5.95pp | 0.00pp |
-| Student baseline (TinyCNN) | `p1_tinycnn_seed42` | 23,491 | 76.87% | 80.57% | -5.95pp | 0.00pp | 5.95pp |
-| Student + CBAM baseline (rr8/sk3) | `p1_tinycnn_cbam_rr8_sk3_seed42` | 23,801 | 79.77% | 82.74% | +2.90pp | +2.90pp | 3.06pp |
-| Best KD on TinyCNN | `p2_kd_tinycnn_a0p6_t5_seed42` | 23,491 | 78.87% | 82.23% | +2.00pp | +2.00pp | 3.95pp |
-| Best KD on TinyCNN_CBAM | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 23,801 | 81.71% | 84.95% | +1.95pp | +4.84pp | 1.11pp |
+| stage | run_name | params | test_f1 | test_acc | delta_vs_tinycnn_baseline |
+|---|---|---:|---:|---:|---:|
+| Teacher baseline (CRNN) | `p1_crnn_seed42` | 73,411 | 82.82% | 86.12% | +5.95pp |
+| Student baseline (TinyCNN) | `p1_tinycnn_seed42` | 23,491 | 76.87% | 80.57% | 0.00pp |
+| Student + CBAM baseline (rr8/sk3) | `p1_tinycnn_cbam_rr8_sk3_seed42` | 23,801 | 79.77% | 82.74% | +2.90pp |
+| Best KD on TinyCNN | `p2_kd_tinycnn_a0p6_t5_seed42` | 23,491 | 78.87% | 82.23% | +2.00pp |
+| Best KD on TinyCNN_CBAM | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | 23,801 | 81.71% | 84.95% | +4.84pp |
 
 Interpretation:
 - CBAM gives a strong lift over TinyCNN baseline (+2.90pp test F1).
 - KD improves both student tracks in best settings (TinyCNN and TinyCNN_CBAM).
-- Best overall compact student is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`), leaving only 1.11pp F1 gap to teacher.
+- Best overall compact student is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`) with +4.84pp over TinyCNN baseline.
 - For this campaign, combining architectural attention (CBAM) and distillation yields the strongest small-model result.
 
 ### Parameter Exploration Caveat
