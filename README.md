@@ -4,7 +4,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/)
 [![Dataset](https://img.shields.io/badge/Dataset-DreamCatcher-lightgrey.svg)](https://huggingface.co/datasets/THU-PI-Sensing/DreamCatcher)
-[![Paper](https://img.shields.io/badge/NeurIPS%202024-Paper-b31b1b.svg)](https://dl.acm.org/doi/10.5555/3737916.3740620)
 
 > **Note:** This benchmark is under active development. Results and experiment configurations may be updated as new runs complete.
 
@@ -27,18 +26,25 @@ This repository benchmarks lightweight classifiers on three sleep-relevant sound
 
 In KD scenarios, `CRNN` is used as the teacher and `TinyCNN` as the student.
 
-| Test Acc. | Test F1 | Params | Run Name | Stage |
-|---:|---:|---:|---|---|
-| 86.12% | **82.82%** 🧠 | 73,411 | `p1_crnn_seed42` | CRNN baseline |
-| 80.57% | **76.87%** 🪶 | 23,491 | `p1_tinycnn_seed42` | TinyCNN baseline |
-| 82.23% | 78.87% | 23,491 | `p2_kd_tinycnn_a0p6_t5_seed42` | Best TinyCNN w/ KD |
-| 82.74% | 79.77% | 23,801 | `p1_tinycnn_cbam_rr8_sk3_seed42` | Best TinyCNN w/ CBAM |
-| 84.95% | **81.71%** 🚀 | 23,801 | `p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42` | Best TinyCNN w/ KD+CBAM |
+| Stage | Params | Test F1 | Test Acc. |
+|---|---:|---:|---:|
+| CRNN baseline | 73,411 | **82.82%** 🧠 | 86.12% |
+| TinyCNN baseline | 23,491 | **76.87%** 🪶 | 80.57% |
+| Best TinyCNN w/ KD | 23,491 | 78.87% | 82.23% |
+| Best TinyCNN w/ CBAM | 23,801 | 79.77% | 82.74% |
+| Best TinyCNN w/ KD+CBAM | 23,801 | **81.71%** 🚀 | 84.95% |
 
 `Test F1` refers to macro-F1 on the test split.
 
+Run mapping (`Stage -> run_name`):
+- `CRNN baseline -> p1_crnn_seed42`
+- `TinyCNN baseline -> p1_tinycnn_seed42`
+- `Best TinyCNN w/ KD -> p2_kd_tinycnn_a0p6_t5_seed42`
+- `Best TinyCNN w/ CBAM -> p1_tinycnn_cbam_rr8_sk3_seed42`
+- `Best TinyCNN w/ KD+CBAM -> p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`
+
 Interpretation:
-- Best compact result is KD+CBAM (`p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`) at **81.71%** test macro-F1.
+- Best compact result is KD+CBAM at **81.71%** test macro-F1.
 - Final teacher gap is **1.11pp** (teacher **82.82%** vs best compact **81.71%**), down from **5.95pp** at TinyCNN baseline.
 - This is achieved with a much smaller model: **23,801 params** vs **73,411** for teacher (about **3.08x smaller**, ~**67.6% fewer** parameters).
 
