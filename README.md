@@ -7,7 +7,9 @@
 
 > **Note:** This benchmark is under active development. Results and experiment configurations may be updated as new runs complete.
 
-Most people who snore have no idea they do, and by the time a sleep disorder is caught, it has often gone unnoticed for years. Clinical diagnosis requires an overnight stay in a lab, which is expensive, intrusive, and impractical for routine screening. Earables (lightweight in-ear devices) can change this by passively capturing respiratory audio while the wearer sleeps, but only if the models are small and accurate enough to run directly on the device without streaming private audio to the cloud.
+Most people who snore have no idea they do, and by the time a sleep disorder is caught, it has often gone unnoticed for years. Clinical diagnosis often requires an overnight lab study, which is expensive, intrusive, and impractical for routine screening.
+
+Earables (lightweight in-ear devices) can make sleep-event screening continuous and private, but only if models are small enough for on-device inference while still preserving strong classification quality.
 
 This repository benchmarks lightweight classifiers on three sleep-relevant sound events (`quiet`, `breathe`, `snore`) using the [DreamCatcher dataset (NeurIPS 2024)](https://dl.acm.org/doi/10.5555/3737916.3740620). The focus is on the trade-off between model size and classification performance through attention mechanisms (CBAM) and knowledge distillation.
 
@@ -30,25 +32,19 @@ In KD scenarios, `CRNN` is used as the teacher and `TinyCNN` as the student.
 
 | Stage | Params | Test F1 | Test Acc. |
 |---|---:|---:|---:|
-| CRNN baseline | 73,411 | **82.82%** 🧠 | 86.12% |
-| TinyCNN baseline | 23,491 | **76.87%** 🪶 | 80.57% |
+| CRNN baseline | 73,411 | 🧠 **82.82%** | 86.12% |
+| TinyCNN baseline | 23,491 | 🪶 **76.87%** | 80.57% |
 | Best TinyCNN w/ KD | 23,491 | 78.87% | 82.23% |
 | Best TinyCNN w/ CBAM | 23,801 | 79.77% | 82.74% |
-| Best TinyCNN w/ KD+CBAM | 23,801 | **81.71%** 🚀 | 84.95% |
+| Best TinyCNN w/ KD+CBAM | 23,801 | 🚀 **81.71%** | 84.95% |
 
 `Test F1` refers to macro-F1 on the test split.
-
-Run mapping (`Stage -> run_name`):
-- `CRNN baseline -> p1_crnn_seed42`
-- `TinyCNN baseline -> p1_tinycnn_seed42`
-- `Best TinyCNN w/ KD -> p2_kd_tinycnn_a0p6_t5_seed42`
-- `Best TinyCNN w/ CBAM -> p1_tinycnn_cbam_rr8_sk3_seed42`
-- `Best TinyCNN w/ KD+CBAM -> p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`
 
 Interpretation:
 - Best compact result is KD+CBAM at **81.71%** test macro-F1.
 - Final teacher gap is **1.11pp** (teacher **82.82%** vs best compact **81.71%**), down from **5.95pp** at TinyCNN baseline.
 - This is achieved with a much smaller model: **23,801 params** vs **73,411** for teacher (about **3.08x smaller**, ~**67.6% fewer** parameters).
+- Deployment lens: near-teacher F1 with a model that is ~**3.08x** smaller.
 
 ### Parameter Exploration Caveat
 
@@ -220,33 +216,16 @@ Each entry links experiment evidence (run name + artifact path) and the resultin
 
 ## Artifacts and Tracking
 
-For each run, this repo writes (mandatory contract):
+Mandatory per-run artifacts and schema enforcement are documented in:
 
-- `results/runs/<run_name>/metrics.json`
-- `results/runs/<run_name>/epoch_metrics.csv`
-- `results/runs/<run_name>/test_metrics.csv`
-- `results/runs/<run_name>/class_metrics.csv`
-- `results/runs/<run_name>/test_confusion_matrix.csv`
-- `results/runs/<run_name>/checkpoints/best_model.pth`
-- `results/runs/<run_name>/checkpoints/last_model.pth`
-- `results/runs/<run_name>/checkpoints/optimizer_last.pth`
-- `results/runs/<run_name>/checkpoints/rng_state.pth`
-- `results/runs/<run_name>/resolved_config.json`
-- `results/runs/<run_name>/env.json`
-- `results/runs/<run_name>/git.json`
-- `results/runs/<run_name>/data_fingerprint.json`
-- `results/runs/<run_name>/early_stop.json`
+- `docs/artifact_contract.md`
+- `src/utils/csv_schemas.py`
 
-Global tracking files:
+Primary tracking files:
 
 - `results/leaderboard.csv`
 - `results/run_steps.csv`
-
-Contract documentation:
-
-- `docs/artifact_contract.md`
-- `src/utils/csv_schemas.py` (mandatory CSV header definitions)
-- `docs/decision_log.md` (project-level experiment decisions)
+- `docs/decision_log.md`
 
 Execution policy decision (pinned):
 
@@ -274,3 +253,13 @@ dreamcatcher-earable-wearer-aware-benchmark/
 │   └── leaderboard.csv
 └── logs/
 ```
+
+`results/cache`, `results/runs`, and `logs` are runtime-generated; these directories are not fully tracked in git.
+
+## Appendix: Stage to Run Mapping
+
+- `CRNN baseline -> p1_crnn_seed42`
+- `TinyCNN baseline -> p1_tinycnn_seed42`
+- `Best TinyCNN w/ KD -> p2_kd_tinycnn_a0p6_t5_seed42`
+- `Best TinyCNN w/ CBAM -> p1_tinycnn_cbam_rr8_sk3_seed42`
+- `Best TinyCNN w/ KD+CBAM -> p2_kd_tinycnn_cbam_rr8_sk3_a0p9_t3_seed42`
